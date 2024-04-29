@@ -152,17 +152,18 @@ end
 
 figure(22), clf;
 plot(tau_range, lm_static, "LineWidth",1.5), hold on;
-plot(tau_range, lm_dynamic, "LineWidth",1.5);
+plot(tau_range, lm_dynamic, "LineWidth",1.5, "LineStyle","--");
+plot(tau_range, max(lm_dynamic), "LineWidth",1.5);
 yline(1, "LineWidth",1.5);
 % ylim([0.5, 1.4]);
-legend('$K=\big[\bar{K} \; 0\big]$',['$K=\big[\bar{K} \;', num2str(U_gain, '%.1f'),'\big]$'],'1', "interpreter", "latex", "Location","northwest");
+legend('$K=\big[\bar{K} \; 0\big]$','','','',['$K=\big[\bar{K} \;', num2str(U_gain, '%.1f'),'\big]$'],'1', "interpreter", "latex", "Location","northwest");
 xlabel("$\tau \;[seconds]$", "Interpreter","latex")
 ylabel("$\rho \big(F(h)-G(h)\bar{K}\big)$", "Interpreter","latex")
 set(gcf, "Theme", "light"); % Uncomment for report plots
 
 
 %% Question 3
-% Q3.1
+%% Q3.1
 Fx = expm(A*h);
 eAds = (expm(A*h) -eye(2))/A *B;
 Fu1 = -A\expm(A*h)*B + eAds + A\eAds/h;
@@ -173,40 +174,10 @@ G1 = [0;0;1;0];
 
 K = [K_static,0,0];
 
-%Q3.2
+%% Q3.2
 % Testing for what ranges of sampling times h the system is stable
-h_range = linspace(1e-2,1e0,1e5);
-i = 1;
-stable = zeros(size(h_range));
-lm = zeros(size(h_range));
-clearvars h_max
-for h = h_range
-    Fx = expm(A*h);
-    eAds = (expm(A*h) -eye(2))/A *B;
-    Fu1 = -A\expm(A*h)*B + eAds + A\eAds/h;
-    Fu2 = A\expm(A*h)*B - A\eAds/h;
-    
-    F1 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
-    G1 = [0;0;1;0];
-    
-    K = [K_static,0,0];
-    lm(i) = max(abs(eig(F1-G1*K))); % Spectral radius
-    if lm(i) < 1
-        stable(i) = 1;
-        h_max = h;
-    end
-    i = i+1;
-end
-% h_index = find(h_range == h_max);
-
-figure(32), clf;
-plot(h_range, lm,"LineWidth",1.5), hold on;
-xline(h_max,"LineWidth",1.5);
-legend('Spectral radius',['$h = ', num2str(h_max, '%.4f'),'$'], "interpreter", "latex");
-
-%%
-h_res = 1e2;
-tau_res = 1e2;
+h_res = 1e4;
+tau_res = 2e0;
 
 h_range = linspace(1e-4,1e0,h_res);
 tau_range = linspace(0,5e-1,tau_res);
@@ -237,25 +208,32 @@ for h = h_range
     i = i+1;
 end
 
-figure(41), clf;
+x32 = 0.12426;
+poly32 = polyshape([[x32, x32; x32, 0], c_resh(:,1:ind)-0.005]');
+
+figure(32), clf;
 contour(h_range, tau_range, lm, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-plot(poly, "FaceColor", "b", "FaceAlpha", 0.2, "EdgeAlpha",0);
+plot(poly32, "FaceColor", "b", "FaceAlpha", 0.2, "EdgeAlpha",0);
+plot(polyshape([0 x32 x32],[0 x32 0]), "FaceColor", "g", "FaceAlpha", 0.45, "EdgeAlpha",0);
 plot(polyshape([0 1 0],[0 1 1]), "FaceColor", "w", "FaceAlpha", 1);
 plot([0,1],[0,1], "LineWidth", 1.5, "Color","#D95319");
 xlim([0, 1]);
 ylim([0, 0.5]);
-lgd = legend('Spectral radius contour lines','Stable region','','$\tau = h$', "interpreter", "latex", "Location","northwest");
+lgd = legend('Spectral radius contour lines','Stable region $Q_2$','Stable region $Q_3$','','$\tau = h$', "interpreter", "latex", "Location","northwest");
 fontsize(lgd,14,"points");
 xlabel("$h \;[seconds]$", "Interpreter","latex")
 ylabel("$\tau \;[seconds]$", "Interpreter","latex")
 set(gcf, "Theme", "light"); % Uncomment for report plots
 
-%%
-h_res = 1e2;
-tau_res = 1e2;
+%% Q3.3
+U1_gain = 0.8;
+U2_gain = 0.5;
+
+h_res = 1e4;
+tau_res = 2;
 
 h_range = linspace(1e-4,1e0,h_res);
-tau_range = linspace(0,5e-1,tau_res);
+tau_range = linspace(0,1,tau_res);
 i = 1;
 stable = zeros(size(h_range,2),size(tau_range,2))';
 lm = zeros(size(h_range,2),size(tau_range,2))';
@@ -272,7 +250,7 @@ for h = h_range
         F1 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
         G1 = [0;0;1;0];
         
-        K = [K_static,0.8,0.5];
+        K = [K_static,U1_gain,U2_gain];
         lm(j,i) = max(abs(eig(F1-G1*K))); % Spectral radius
         if lm(j,i) < 1
             stable(j,i) = 1;
@@ -283,14 +261,18 @@ for h = h_range
     i = i+1;
 end
 
-figure(41), clf;
-contour(h_range, tau_range, lm, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-plot(poly, "FaceColor", "b", "FaceAlpha", 0.2, "EdgeAlpha",0);
+idx = find(lm(1,:)<1,1,"last");
+x33 = h_range(idx);
+
+figure(33), clf;
+contour(h_range, tau_range, lm, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85, "LevelList",[1 1.3 1.8]), hold on;
+plot(polyshape([0 x32 x32],[0 x32 0]), "FaceColor", "g", "FaceAlpha", 0.45, "EdgeAlpha",0);
+plot(polyshape([x32 x32 x33 x33],[0 x32 x33 0]), "FaceColor", "b", "FaceAlpha", 0.2, "EdgeAlpha",0);
 plot(polyshape([0 1 0],[0 1 1]), "FaceColor", "w", "FaceAlpha", 1);
 plot([0,1],[0,1], "LineWidth", 1.5, "Color","#D95319");
 xlim([0, 1]);
-ylim([0, 0.5]);
-lgd = legend('Spectral radius contour lines','Stable region','','$\tau = h$', "interpreter", "latex", "Location","northwest");
+ylim([0, 1]);
+lgd = legend('Spectral radius contour lines','Stable region $K=\big[\bar{K} \; 0.0\; 0.0\big]$',['Stable region $K=\big[\bar{K} \;', num2str(U1_gain, '%.1f'),'\;',num2str(U2_gain, '%.1f'),'\big]$'],'','$\tau = h$', "interpreter", "latex", "Location","northwest");
 fontsize(lgd,14,"points");
 xlabel("$h \;[seconds]$", "Interpreter","latex")
 ylabel("$\tau \;[seconds]$", "Interpreter","latex")

@@ -30,9 +30,8 @@ stable = zeros(size(h_range));
 lm = zeros(size(h_range));
 
 for h = h_range
-    Fh = expm(A*h);
-    Gh = (Fh -eye(2))/A *B;
-    lm(i) = max(abs(eig(Fh-Gh*K_static))); % Spectral radius
+    A_cl = c2d_zoh(A,B,K_static,0,h,0);
+    lm(i) = max(abs(eig(A_cl))); % Spectral radius
     if lm(i) < 1
         stable(i) = 1;
         h_max = h;
@@ -81,15 +80,8 @@ h_max = zeros(size(tau_range));
 for h = h_range
     j = 1;
     for tau = tau_range
-        Fx = expm(A*h);
-        G1 = (expm(A*(h-tau)) -eye(2))/A *B;
-        Fu = (Fx -eye(2))/A *B -G1;
-    
-        F = [Fx, Fu;
-            zeros(1,3)];
-        G = [G1; eye(1)];
-        K = [K_static, 0];
-        lm(j,i) = max(abs(eig(F-G*K))); % Spectral radius
+        A_cl = c2d_zoh(A,B,K_static,0,h,tau);
+        lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
         if lm(j,i) < 1
             stable(j,i) = 1;
             h_max(i) = h;
@@ -122,8 +114,6 @@ set(gcf, "Theme", "light"); % Uncomment for report plots
 %% Question 2.2
 % Definitely need to make this plot better
 U_gain = 0.9;
-K1 = [K_static, 0];
-K2 = [K_static, U_gain];
 
 % Testing for what ranges of sampling times h the system is stable
 h = 0.4;
@@ -136,16 +126,11 @@ for tau = tau_range
     if tau > h
         break;
     end
-    Fx = expm(A*h);
-    G1 = (expm(A*(h-tau)) -eye(2))/A *B;
-    Fu = (Fx -eye(2))/A *B -G1;
+    A_cl0 = c2d_zoh(A,B,K_static,0,h,tau);
+    A_clU = c2d_zoh(A,B,K_static,U_gain,h,tau);
 
-    F = [Fx, Fu;
-        zeros(1,3)];
-    G = [G1; eye(1)];
-
-    lm_static(i) = max(abs(eig(F-G*K1))); % Spectral radius
-    lm_dynamic(:,i) = (abs(eig(F-G*K2))); % Spectral radius
+    lm_static(i) = max(abs(eig(A_cl0))); % Spectral radius
+    lm_dynamic(:,i) = (abs(eig(A_clU))); % Spectral radius
     
     i = i+1;
 end
@@ -189,16 +174,8 @@ h_max = zeros(size(tau_range));
 for h = h_range
     j = 1;
     for tau = tau_range
-        Fx = expm(A*h);
-        eAds = (expm(A*h) -eye(2))/A *B;
-        Fu1 = -A\expm(A*h)*B + eAds + A\eAds/h;
-        Fu2 = A\expm(A*h)*B - A\eAds/h;
-        
-        F1 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
-        G1 = [0;0;1;0];
-        
-        K = [K_static,0,0];
-        lm(j,i) = max(abs(eig(F1-G1*K))); % Spectral radius
+        A_cl = c2d_foh(A,B,K_static,0, 0, h, tau);
+        lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
         if lm(j,i) < 1
             stable(j,i) = 1;
             h_max(i) = h;
@@ -242,16 +219,8 @@ h_max = zeros(size(tau_range));
 for h = h_range
     j = 1;
     for tau = tau_range
-        Fx = expm(A*h);
-        eAds = (expm(A*h) -eye(2))/A *B;
-        Fu1 = -A\expm(A*h)*B + eAds + A\eAds/h;
-        Fu2 = A\expm(A*h)*B - A\eAds/h;
-        
-        F1 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
-        G1 = [0;0;1;0];
-        
-        K = [K_static,U1_gain,U2_gain];
-        lm(j,i) = max(abs(eig(F1-G1*K))); % Spectral radius
+        A_cl = c2d_foh(A,B,K_static,U1_gain, U2_gain, h, tau);
+        lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
         if lm(j,i) < 1
             stable(j,i) = 1;
             h_max(i) = h;
@@ -395,14 +364,28 @@ K_2 = place(A2,B2,p);
 
 
 
-function A_cl = c2d_zoh(A,B,K_static,U_gain,h,tau)
+function A_cl = c2d_zoh(A, B, K_static, U_gain, h, tau)
     Fx = expm(A*h);
     G1 = (expm(A*(h-tau)) -eye(2))/A *B;
     Fu = (Fx -eye(2))/A *B -G1;
 
     F = [Fx, Fu;
         zeros(1,3)];
-    G = [G1; eye(1)];
+    G = [G1; 1];
     K = [K_static, U_gain];
     A_cl = F-G*K;
+end
+
+function A_cl = c2d_foh(A,B,K_static,U1_gain, U2_gain, h, tau)
+    Fx = expm(A*h);
+    eAds = (expm(A*h) -eye(2))/A *B;
+    Fu1 = -A\B + A\eAds/h;
+    Fu2 = A\expm(A*h)*B - A\eAds/h;
+    
+    F1 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
+    G1 = [0;0;1;0];
+    
+    K = [K_static,U1_gain,U2_gain];
+
+    A_cl = F1-G1*K;
 end

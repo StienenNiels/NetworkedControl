@@ -311,7 +311,7 @@ for h = h_range
         F = [Fx, Fu, [0;0];
             zeros(2,4)];
         G = [G1; 1;0];
-        K = [K_static, 0,0];
+        K = [K_static, U_gain,0];
         lmzoh(j,i) = max(abs(eig(F-G*K))); % Spectral radius
 
         Fx = expm(A*h);
@@ -368,3 +368,41 @@ ylabel("$\tau \;[seconds]$", "Interpreter","latex")
 %% Question 5
 
 % Constant h and no delay
+% Initilization of systems:
+h1 = 0.4;
+A1 = [0.3+a-b, 0.5-c;
+     0, 1];
+B1 = [0;1];
+
+h2 = 3*h1;
+A2 = A1/3;
+B2 = B1;
+
+% Packets drop out alternating
+% So system 1 drops a packet every 6th sample
+% And system 2 drops every 2nd packet
+% First attempt simply use the same pole placement for both
+p = [-1-2j, -1+2j];
+K_1 = place(A1,B1,p);
+K_2 = place(A2,B2,p);
+
+% to-zero analysis
+
+
+
+% to-hold analysis
+
+
+
+
+function A_cl = c2d_zoh(A,B,K_static,U_gain,h,tau)
+    Fx = expm(A*h);
+    G1 = (expm(A*(h-tau)) -eye(2))/A *B;
+    Fu = (Fx -eye(2))/A *B -G1;
+
+    F = [Fx, Fu;
+        zeros(1,3)];
+    G = [G1; eye(1)];
+    K = [K_static, U_gain];
+    A_cl = F-G*K;
+end

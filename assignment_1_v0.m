@@ -32,7 +32,7 @@ lm = zeros(size(h_range));
 
 for h = h_range
     A_cl = c2d_zoh(A,B,K_static,0,h,0);
-    lm(i) = max(abs(eig(A_cl))); % Spectral radius
+    lm(i) = sr(A_cl); % Spectral radius
     if lm(i) < 1
         h_max = h;
     end
@@ -80,7 +80,7 @@ for h = h_range
     j = 1;
     for tau = tau_range
         A_cl = c2d_zoh(A,B,K_static,0,h,tau);
-        lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
+        lm(j,i) = sr(A_cl); % Spectral radius
         if lm(j,i) < 1
             h_max(i) = h;
         end
@@ -127,7 +127,7 @@ for tau = tau_range
     A_cl0 = c2d_zoh(A,B,K_static,0,h,tau);
     A_clU = c2d_zoh(A,B,K_static,U_gain,h,tau);
 
-    lm_static(i) = max(abs(eig(A_cl0))); % Spectral radius
+    lm_static(i) = sr(A_cl); % Spectral radius
     lm_dynamic(:,i) = (abs(eig(A_clU))); % Spectral radius
     
     i = i+1;
@@ -172,7 +172,7 @@ for h = h_range
     j = 1;
     for tau = tau_range
         A_cl = c2d_foh(A,B,K_static,0, 0, h, tau);
-        lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
+        lm(j,i) = sr(A_cl); % Spectral radius
         if lm(j,i) < 1
             h_max(i) = h;
         end
@@ -215,7 +215,7 @@ for h = h_range
     j = 1;
     for tau = tau_range
         A_cl = c2d_foh(A,B,K_static,U1_gain, U2_gain, h, tau);
-        lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
+        lm(j,i) = sr(A_cl); % Spectral radius
         if lm(j,i) < 1
             h_max(i) = h;
         end
@@ -285,9 +285,9 @@ for h = h_range
         G2 = [0;0;1;0];
         
         K2 = [K_static,U1_gain,U2_gain];
-        lmfoh(j,i) = max(abs(eig(F2-G2*K2))); % Spectral radius
-        lmsq1(j,i) = max(abs(eig( (F-G*K)*(F2-G2*K2) )));
-        lmsq2(j,i) = max(abs(eig( (F-G*K)*(F2-G2*K2)*(F2-G2*K2) )));
+        lmfoh(j,i) = sr(F2-G2*K2); % Spectral radius
+        lmsq1(j,i) = sr( (F-G*K)*(F2-G2*K2) );
+        lmsq2(j,i) = sr( (F-G*K)*(F2-G2*K2)*(F2-G2*K2) );
         j = j+1;
     end
     i = i+1;
@@ -327,8 +327,11 @@ xlabel("$h \;[seconds]$", "Interpreter","latex")
 ylabel("$\tau \;[seconds]$", "Interpreter","latex")
 % set(gcf, "Theme", "light"); % Uncomment for report plots
 
-%% Question 5
+%% Q4.3
+% Might need help
 
+%% Question 5
+clc
 % Constant h and no delay
 % Initilization of systems:
 h1 = 0.4;
@@ -345,12 +348,11 @@ B2 = B1;
 % And system 2 drops every 2nd packet
 % First attempt simply use the same pole placement for both
 p = [-1-2j, -1+2j];
-K_1 = place(A1,B1,p);
-K_2 = place(A2,B2,p);
+K1 = place(A1,B1,p);
+K2 = place(A2,B2,p);
 
-% to-zero analysis
+% System 1
+[A_zp1, A_znp1, A_hp1, A_hnp1] = c2d_zero_hold(A1, B1, K1, h1);
 
-
-
-% to-hold analysis
-
+% System 2
+[A_zp2, A_znp2, A_hp2, A_hnp2] = c2d_zero_hold(A2, B2, K2, h2);

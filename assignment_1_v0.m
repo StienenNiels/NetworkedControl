@@ -127,7 +127,7 @@ for tau = tau_range
     A_cl0 = c2d_zoh(A,B,K_static,0,h,tau);
     A_clU = c2d_zoh(A,B,K_static,U_gain,h,tau);
 
-    lm_static(i) = sr(A_cl); % Spectral radius
+    lm_static(i) = sr(A_cl0); % Spectral radius
     lm_dynamic(:,i) = (abs(eig(A_clU))); % Spectral radius
     
     i = i+1;

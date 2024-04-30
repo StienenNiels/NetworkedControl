@@ -2,6 +2,8 @@ clear
 close all
 clc
 
+addpath("Functions\")
+
 %% Initialization of matrices A and B
 student_id = 5595738;
 a = 5;
@@ -26,14 +28,12 @@ K_static = place(A,B,p);
 % Testing for what ranges of sampling times h the system is stable
 h_range = linspace(1e-2,1e0,1e5);
 i = 1;
-stable = zeros(size(h_range));
 lm = zeros(size(h_range));
 
 for h = h_range
     A_cl = c2d_zoh(A,B,K_static,0,h,0);
     lm(i) = max(abs(eig(A_cl))); % Spectral radius
     if lm(i) < 1
-        stable(i) = 1;
         h_max = h;
     end
     i = i+1;
@@ -73,7 +73,6 @@ tau_res = 1e2;
 h_range = linspace(1e-4,1e0,h_res);
 tau_range = linspace(0,5e-1,tau_res);
 i = 1;
-stable = zeros(size(h_range,2),size(tau_range,2))';
 lm = zeros(size(h_range,2),size(tau_range,2))';
 h_max = zeros(size(tau_range));
 
@@ -83,7 +82,6 @@ for h = h_range
         A_cl = c2d_zoh(A,B,K_static,0,h,tau);
         lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
         if lm(j,i) < 1
-            stable(j,i) = 1;
             h_max(i) = h;
         end
         j = j+1;
@@ -167,7 +165,6 @@ tau_res = 2e0;
 h_range = linspace(1e-4,1e0,h_res);
 tau_range = linspace(0,5e-1,tau_res);
 i = 1;
-stable = zeros(size(h_range,2),size(tau_range,2))';
 lm = zeros(size(h_range,2),size(tau_range,2))';
 h_max = zeros(size(tau_range));
 
@@ -177,7 +174,6 @@ for h = h_range
         A_cl = c2d_foh(A,B,K_static,0, 0, h, tau);
         lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
         if lm(j,i) < 1
-            stable(j,i) = 1;
             h_max(i) = h;
         end
         j = j+1;
@@ -212,7 +208,6 @@ tau_res = 2;
 h_range = linspace(1e-4,1e0,h_res);
 tau_range = linspace(0,1,tau_res);
 i = 1;
-stable = zeros(size(h_range,2),size(tau_range,2))';
 lm = zeros(size(h_range,2),size(tau_range,2))';
 h_max = zeros(size(tau_range));
 
@@ -222,7 +217,6 @@ for h = h_range
         A_cl = c2d_foh(A,B,K_static,U1_gain, U2_gain, h, tau);
         lm(j,i) = max(abs(eig(A_cl))); % Spectral radius
         if lm(j,i) < 1
-            stable(j,i) = 1;
             h_max(i) = h;
         end
         j = j+1;
@@ -260,7 +254,6 @@ tau_res = 1e3;
 h_range = linspace(1e-4,1e0,h_res);
 tau_range = linspace(0,1,tau_res);
 i = 1;
-stable = zeros(size(h_range,2),size(tau_range,2))';
 lmzoh = zeros(size(h_range,2),size(tau_range,2))';
 lmfoh = zeros(size(h_range,2),size(tau_range,2))';
 lmsq1 = zeros(size(h_range,2),size(tau_range,2))';
@@ -361,31 +354,3 @@ K_2 = place(A2,B2,p);
 
 % to-hold analysis
 
-
-
-
-function A_cl = c2d_zoh(A, B, K_static, U_gain, h, tau)
-    Fx = expm(A*h);
-    G1 = (expm(A*(h-tau)) -eye(2))/A *B;
-    Fu = (Fx -eye(2))/A *B -G1;
-
-    F = [Fx, Fu;
-        zeros(1,3)];
-    G = [G1; 1];
-    K = [K_static, U_gain];
-    A_cl = F-G*K;
-end
-
-function A_cl = c2d_foh(A,B,K_static,U1_gain, U2_gain, h, tau)
-    Fx = expm(A*h);
-    eAds = (expm(A*h) -eye(2))/A *B;
-    Fu1 = -A\B + A\eAds/h;
-    Fu2 = A\expm(A*h)*B - A\eAds/h;
-    
-    F1 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
-    G1 = [0;0;1;0];
-    
-    K = [K_static,U1_gain,U2_gain];
-
-    A_cl = F1-G1*K;
-end

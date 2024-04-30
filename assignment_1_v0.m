@@ -351,8 +351,54 @@ p = [-1-2j, -1+2j];
 K1 = place(A1,B1,p);
 K2 = place(A2,B2,p);
 
-% System 1
-[A_zp1, A_znp1, A_hp1, A_hnp1] = c2d_zero_hold(A1, B1, K1, h1);
+% % System 1
+% [A_zp1, A_znp1, A_hp1, A_hnp1] = c2d_zero_hold(A1, B1, K1, h1);
+% 
+% % System 2
+% [A_zp2, A_znp2, A_hp2, A_hnp2] = c2d_zero_hold(A2, B2, K2, h2);
+% 
+% 
+% % Setup sequences
+% S1z = A_zp1*A_zp1*A_znp1*A_zp1*A_zp1*A_zp1;
+% S1h = A_hp1*A_hp1*A_hnp1*A_hp1*A_hp1*A_hp1;
+% S2z = A_znp2*A_zp2;
+% S2h = A_hnp2*A_hp2;
 
-% System 2
-[A_zp2, A_znp2, A_hp2, A_hnp2] = c2d_zero_hold(A2, B2, K2, h2);
+h_range = linspace(1e-2,1e0,1e5);
+i = 1;
+lm = zeros(4,size(h_range,2));
+
+for h1 = h_range
+
+    h2 = 3*h1;
+    % System 1
+    [A_zp1, A_znp1, A_hp1, A_hnp1] = c2d_zero_hold(A1, B1, K1, h1);
+    
+    % System 2
+    [A_zp2, A_znp2, A_hp2, A_hnp2] = c2d_zero_hold(A2, B2, K2, h2);
+    
+    
+    % Setup sequences
+    S1z = A_zp1*A_zp1*A_znp1*A_zp1*A_zp1*A_zp1;
+    S1h = A_hp1*A_hp1*A_hnp1*A_hp1*A_hp1*A_hp1;
+    S2z = A_znp2*A_zp2;
+    S2h = A_hnp2*A_hp2;
+
+    % Check the spectral radii
+    lm(:,i) = [sr(S1z);sr(S1h);sr(S2z);sr(S2h)];
+    % if lm(i) < 1
+    %     h_max = h;
+    % end
+    i = i+1;
+end
+
+figure(51), clf;
+plot(h_range, lm,"LineWidth",1.5), hold on;
+yline(1,"LineWidth",1.5,"Color","w");
+% xscale("log")
+ylim([0.0, 1.3])
+lgd = legend('System 1, to-zero','System 1, to-hold','System 2, to-zero','System 2, to-hold', "interpreter", "latex", "Location","northwest");
+% fontsize(lgd,14,"points");
+xlabel("$h \; [seconds]$", "Interpreter","latex")
+ylabel("$\rho \big(\big)$", "Interpreter","latex")
+% set(gcf, "Theme", "light"); % Uncomment for report plots

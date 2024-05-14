@@ -245,90 +245,118 @@ set(gcf, "Theme", "light"); % Uncomment for report plots
 % Find a common Lyapunov function that holds for both zoh and linear order
 % interpolation
 
-%% Q4.2 % Check met Alex
+%% Q4.2
 
 % Testing for what ranges of sampling times h the system is stable
-h_res = 1e3;
-tau_res = 1e3;
+h_res = 5e2;
+tau = 0;
 
 h_range = linspace(1e-4,1e0,h_res);
-tau_range = linspace(0,1,tau_res);
 i = 1;
-lmzoh = zeros(size(h_range,2),size(tau_range,2))';
-lmfoh = zeros(size(h_range,2),size(tau_range,2))';
-lmsq1 = zeros(size(h_range,2),size(tau_range,2))';
-lmsq2 = zeros(size(h_range,2),size(tau_range,2))';
-h_max = zeros(size(tau_range));
+lmsq1 = zeros(size(h_range,2),size(h_range,2))';
+lmsq2 = zeros(size(h_range,2),size(h_range,2))';
+stable1 = zeros(size(h_range,2),size(h_range,2))';
+stable2 = zeros(size(h_range,2),size(h_range,2))';
 
-for h = h_range
+for h1 = h_range
     j = 1;
-    for tau = tau_range
-        if tau > h
-            break;
-        end
-        Fx = expm(A*h);
-        G1 = (expm(A*(h-tau)) -eye(2))/A *B;
+    for h2 = h_range
+        Fx = expm(A*h1);
+        G1 = (expm(A*(h1-tau)) -eye(2))/A *B;
         Fu = (Fx -eye(2))/A *B -G1;
     
         F = [Fx, Fu, [0;0];
-            zeros(2,4)];
+            0,0,0,0;
+            0,0,1,0];
         G = [G1; 1;0];
         K = [K_static, U_gain,0];
-        lmzoh(j,i) = max(abs(eig(F-G*K))); % Spectral radius
 
-        Fx = expm(A*h);
-        eAds = (expm(A*h) -eye(2))/A *B;
-        Fu1 = -A\expm(A*h)*B + eAds + A\eAds/h;
-        Fu2 = A\expm(A*h)*B - A\eAds/h;
+        Fx = expm(A*h2);
+        eAds = (expm(A*h2) -eye(2))/A *B;
+        Fu1 = -A\expm(A*h2)*B + eAds + A\eAds/h2;
+        Fu2 = A\expm(A*h2)*B - A\eAds/h2;
         
         F2 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
         G2 = [0;0;1;0];
-        
         K2 = [K_static,U1_gain,U2_gain];
-        lmfoh(j,i) = sr(F2-G2*K2); % Spectral radius
         lmsq1(j,i) = sr( (F-G*K)*(F2-G2*K2) );
         lmsq2(j,i) = sr( (F-G*K)*(F2-G2*K2)*(F2-G2*K2) );
+        stable1(j,i) = lmsq1(j,i) < 1;
+        stable2(j,i) = lmsq2(j,i) < 1;
         j = j+1;
     end
     i = i+1;
 end
 
+result = stable1 + stable2;
+% if any(result(:) == 2)
+%     figure(88);
+% end
+
 figure(431), clf;
-% contour(h_range, tau_range, lmzoh, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-% contour(h_range, tau_range, lmfoh, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-contour(h_range, tau_range, lmsq1, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-% contour(h_range, tau_range, lmsq2, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-% plot(polyshape([0 x32 x32],[0 x32 0]), "FaceColor", "g", "FaceAlpha", 0.45, "EdgeAlpha",0);
-% plot(polyshape([x32 x32 x33 x33],[0 x32 x33 0]), "FaceColor", "b", "FaceAlpha", 0.2, "EdgeAlpha",0);
-% plot(polyshape([0 1 0],[0 1 1]), "FaceColor", "w", "FaceAlpha", 1);
-plot([0,1],[0,1], "LineWidth", 1.5, "Color","#D95319");
+contour(h_range, h_range, lmsq1, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
 xlim([0, 1]);
 ylim([0, 1]);
-lgd = legend('sq1','$\tau = h$', "interpreter", "latex", "Location","northwest");
+lgd = legend('sq1', "interpreter", "latex", "Location","northwest");
 fontsize(lgd,14,"points");
-xlabel("$h \;[seconds]$", "Interpreter","latex")
-ylabel("$\tau \;[seconds]$", "Interpreter","latex")
-% set(gcf, "Theme", "light"); % Uncomment for report plots
+xlabel("$h1 \;[seconds]$", "Interpreter","latex")
+ylabel("$h2 \;[seconds]$", "Interpreter","latex")
 
 figure(432), clf;
-% contour(h_range, tau_range, lmzoh, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-% contour(h_range, tau_range, lmfoh, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-% contour(h_range, tau_range, lmsq1, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-contour(h_range, tau_range, lmsq2, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
-% plot(polyshape([0 x32 x32],[0 x32 0]), "FaceColor", "g", "FaceAlpha", 0.45, "EdgeAlpha",0);
-% plot(polyshape([x32 x32 x33 x33],[0 x32 x33 0]), "FaceColor", "b", "FaceAlpha", 0.2, "EdgeAlpha",0);
-% plot(polyshape([0 1 0],[0 1 1]), "FaceColor", "w", "FaceAlpha", 1);
-plot([0,1],[0,1], "LineWidth", 1.5, "Color","#D95319");
+contour(h_range, h_range, lmsq2, "ShowText","on", "LineWidth", 1.5, "LabelSpacing", 85), hold on;
 xlim([0, 1]);
 ylim([0, 1]);
-lgd = legend('sq2','$\tau = h$', "interpreter", "latex", "Location","northwest");
+lgd = legend('sq2', "interpreter", "latex", "Location","northwest");
 fontsize(lgd,14,"points");
-xlabel("$h \;[seconds]$", "Interpreter","latex")
-ylabel("$\tau \;[seconds]$", "Interpreter","latex")
+xlabel("$h1 \;[seconds]$", "Interpreter","latex")
+ylabel("$h2 \;[seconds]$", "Interpreter","latex")
 % set(gcf, "Theme", "light"); % Uncomment for report plots
 
+figure(433), clf;
+contour(h_range, h_range, result)
+
 %% Q4.3
-% Might need help
+clc
+U_gain = 0.9;
+U1_gain = 0.8;
+U2_gain = 0.5;
+
+h = 0.2;
+tau = 0;
+Fx = expm(A*h);
+G1 = (expm(A*(h-tau)) -eye(2))/A *B;
+Fu = (Fx -eye(2))/A *B -G1;
+
+F = [Fx, Fu, [0;0];
+     0,0,0,0;
+     0,0,1,0];
+G = [G1; 1;0];
+K = [K_static, U_gain,0];
+
+h = 0.2;
+Fx = expm(A*h);
+eAds = (expm(A*h) -eye(2))/A *B;
+Fu1 = -A\expm(A*h)*B + eAds + A\eAds/h;
+Fu2 = A\expm(A*h)*B - A\eAds/h;
+
+F2 = [Fx, Fu1, Fu2; zeros(1,4);0,0,1,0];
+G2 = [0;0;1;0];
+
+K2 = [K_static,U1_gain,U2_gain];
+Acl1 = (F-G*K)*(F2-G2*K2)
+Acl2 = (F-G*K)*(F2-G2*K2)*(F2-G2*K2)
+
+Q = eye(4);
+e = 1e-3;
+
+cvx_begin sdp
+    variable P(4,4) semidefinite
+    subject to
+        Acl1*P*Acl1' -P +Q <= 0;
+        Acl2*P*Acl2' -P +Q <= 0;
+cvx_end
+
+disp(P)
 
 %% Question 5
 clc

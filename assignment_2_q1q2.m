@@ -33,8 +33,8 @@ h_steps = 1e2;
 
 h_range = linspace(h_start,h_end,h_steps);
 
-Qh = eye(3);
-Qz = eye(2);
+Qh = eye(3)*0.001;
+Qz = eye(2)*0.001;
 
 stableh = zeros(size(h_range));
 stablez = zeros(size(h_range));

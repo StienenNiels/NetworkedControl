@@ -6,81 +6,120 @@ addpath("Functions\")
 set(groot,'defaulttextinterpreter','latex');  
 set(groot, 'defaultAxesTickLabelInterpreter','latex');  
 set(groot, 'defaultLegendInterpreter','latex');
-
-%% Initialization of matrices A and B
-student_id = 5595738;
-a = 5;
-b = 9;
-c = 8;
-
-A = [0.3+a-b, 0.5-c;
-     0, 1];
-B = [0;1];
-
-p = [-1-2j, -1+2j];
-K = place(A,B,p);
-
-lambdas = eig(A-B*K);
-
-Q = eye(2);
-cvx_begin sdp quiet
-    variable P(2,2) semidefinite
-    subject to
-        P == P.'
-        (A-B*K)'*P + P*(A-B*K) == -Q
-cvx_end
 %%
 
 % Number of sigma values to test:
-Nsigma = 2;
+Nsigma = 10;
+sigma_min = 0.01;
+sigma_max = 0.99;
 % Number of initial conditions to test
+Ninit = 2;
+init_max = 5;
+
+T_end = 10;
+plotastate = 0;
+
+%%
+Ninit = 5;
+[sig_val, total_events] = bulkETCsim(10,0.01,0.95, Ninit,2, 10, 0);
+hs = T_end./(total_events/Ninit);
+[~,hs_ind] = max(hs);
+
+% figure(411), clf;
+% colororder({'k','#0072BD'})
+% 
+% yyaxis left;
+% hold on;
+% plot(sig_val, hs, '-o', 'LineWidth', 1.5);
+% plot(sig_val(hs_ind), hs(hs_ind),'.', "MarkerSize",25, "Color","#77AC30");
+% ylim([0, 0.12])
+% yll = ylabel('$h_{avg}$');
+% fontsize(yll,15,"points");
+% 
+% yyaxis right;
+% plot(sig_val, total_events/Ninit, '-x', 'LineWidth', 1.3, "MarkerSize",10);
+% ylim([0, ceil(max(total_events/Ninit)/6000)*6000])
+% ylr = ylabel('$count(s_k)$');
+% fontsize(ylr,15,"points");
+% 
+% xl = xlabel('$\sigma$');
+% fontsize(xl,15,"points");
+% xlim([0,1])
+% lgd = legend('$h_{avg}$', ['$h^*_{avg} = ', num2str(hs(hs_ind), '%.3f'),'$'], '$avg(N_{comms})$', ...
+%      "Location","northeast");
+% fontsize(lgd,11,"points");
+% grid on;
+% set(gcf, "Theme", "light"); % Uncomment for report plots
+
+%%
+Ninit = 5;
+[sig_val, total_events] = bulkETCsim(11,0.01,0.3, Ninit,2, 10, 0);
+hs = T_end./(total_events/Ninit);
+[~,hs_ind] = max(hs);
+
+% figure(412), clf;
+% colororder({'k','#0072BD'})
+% 
+% yyaxis left;
+% hold on;
+% plot(sig_val, hs, '-o', 'LineWidth', 1.5);
+% plot(sig_val(hs_ind), hs(hs_ind),'.', "MarkerSize",25, "Color","#77AC30");
+% ylim([0, 0.12])
+% yll = ylabel('$h_{avg}$');
+% fontsize(yll,15,"points");
+% 
+% yyaxis right;
+% plot(sig_val, total_events/Ninit, '-x', 'LineWidth', 1.3, "MarkerSize",10);
+% ylim([0, ceil(max(total_events/Ninit)/500)*500])
+% ylr = ylabel('$count(s_k)$');
+% fontsize(ylr,15,"points");
+% 
+% xl = xlabel('$\sigma$');
+% fontsize(xl,15,"points");
+% xlim([0,0.3])
+% lgd = legend('$h_{avg}$', ['$h^*_{avg} = ', num2str(hs(hs_ind), '%.3f'),'$'], '$avg(N_{comms})$', ...
+%      "Location","northeast");
+% fontsize(lgd,11,"points");
+% grid on;
+% set(gcf, "Theme", "light"); % Uncomment for report plots
+
+%% Question 4.3
+sigma = 0.039;
+hs_avg = 0.104;
 Ninit = 10;
 
-% Simulation parameters
-sig_val = linspace(0.01,0.8, Nsigma);
-x0_set = -5 + 5 * rand(2, Ninit);
-tspan = [0 10];
+bulk_hs_sim(Ninit,2, 10, hs_avg, 0)
 
-% Initialize zero matrices
-total_events = zeros(length(sig_val),1);
-event_matrix = zeros(length(sig_val), size(x0_set, 2));
-stable = zeros(length(sig_val), size(x0_set, 2));
-simETC = @(tspan, x0, sigma) simETCsystem(tspan, x0, sigma, A, B, K, P, Q);
+%% Question 4.4
 
-tic
-for ind = 1:length(sig_val)
-    sigma = sig_val(ind);
-    event_tot = 0;
-    for init_cond_ind = 1:size(x0_set, 2)
-        x0 = x0_set(:,init_cond_ind);
-        [tTotal, xTotal, events] = simETC(tspan, x0, sigma);
-        event_matrix(ind,init_cond_ind) = events;
-        event_tot = event_tot + events;
-        if round(xTotal(end,1:2),1) == 0 % Check if solution was stable
-            stable(ind, init_cond_ind) = 1;
-        else
-            disp([sigma, init_cond_ind, round(xTotal(end,1:2),2)])
-        end
-    end
-    figure(1),clf;
-    plot(tTotal, xTotal);
-    grid on
-    total_events(ind) = event_tot;
-end
-toc
+Ninit = 5;
+[sig_val, total_events] = bulkETCsim(10,0.01,0.95, Ninit,2, 10, 1);
+hs = T_end./(total_events/Ninit);
+[~,hs_ind] = max(hs);
 
-p_stable = 100*sum(sum(stable))/(length(sig_val)*size(x0_set, 2));
-fprintf("Percentage of results that are stable: %.2f%%\n", p_stable)
+figure(441), clf;
+colororder({'k','#0072BD'})
 
-% Plot of average number of events
-figure(4),clf;
+yyaxis left;
 hold on;
-plot(sig_val, total_events/Ninit, '-o');
-xlabel('Sigma Values');
-ylabel('Average Number of Communications');
-title('Communications vs. Sigma');
-xlim([0,1])
-ylim([0, ceil(max(total_events/Ninit)/1000)*1000])
-grid on;
+plot(sig_val, hs, '-o', 'LineWidth', 1.5);
+plot(sig_val(hs_ind), hs(hs_ind),'.', "MarkerSize",25, "Color","#77AC30");
+ylim([0, 0.12])
+yll = ylabel('$h_{avg}$');
+fontsize(yll,15,"points");
 
+yyaxis right;
+plot(sig_val, total_events/Ninit, '-x', 'LineWidth', 1.3, "MarkerSize",10);
+ylim([0, ceil(max(total_events/Ninit)/6000)*6000])
+ylr = ylabel('$count(s_k)$');
+fontsize(ylr,15,"points");
+
+xl = xlabel('$\sigma$');
+fontsize(xl,15,"points");
+xlim([0,1])
+lgd = legend('$h_{avg}$', ['$h^*_{avg} = ', num2str(hs(hs_ind), '%.3f'),'$'], '$avg(N_{comms})$', ...
+     "Location","northeast");
+fontsize(lgd,11,"points");
+grid on;
+set(gcf, "Theme", "light"); % Uncomment for report plots
 

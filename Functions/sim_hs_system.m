@@ -1,4 +1,4 @@
-function [tTotal, xTotal, events] = simETCsystem(tspan, x0, sigma, A, B, K, P, Q, dist)
+function [tTotal, xTotal, events] = sim_hs_system(tspan, x0, A, B, K, hs, dist)
     % Initialize system
     Nguess = round(tspan(2)/0.01);
     tTotal = zeros(1, Nguess);
@@ -11,15 +11,12 @@ function [tTotal, xTotal, events] = simETCsystem(tspan, x0, sigma, A, B, K, P, Q
 
     ind = 1;
 
-    Efun = @(t,x) eventFunction(t, x, sigma, B, K, P, Q);
-
     % Run simulation
     while tTotal(ind) < tspan(2)
-        options = odeset('Events', @(t,x) Efun(t,x), 'RelTol', 1e-5, 'AbsTol', 1e-7);
         odeFun = @(t, xi) systemDynamics(t, xi, A, B, K, dist);
-        tRemainder = [tTotal(ind), tspan(2)]; % Remainder of Tspan
+        tRemainder = [tTotal(ind), tTotal(ind)+hs]; % Remainder of Tspan
         xReset = [xTotal(ind, 1:2),0,0]'; % Reset the error back to zero
-        [t, x, te, ~, ~] = ode45(odeFun, tRemainder, xReset, options);
+        [t, x] = ode45(odeFun, tRemainder, xReset);
         
         Nnew = length(t) - 1;
         if ind + Nnew > length(tTotal)
@@ -31,14 +28,14 @@ function [tTotal, xTotal, events] = simETCsystem(tspan, x0, sigma, A, B, K, P, Q
         xTotal(ind + 1 : ind + Nnew, :) = x(2:end, :);
         ind = ind + Nnew;
 
-        if ~isempty(te)
-            if size(te) ~= 1
-                disp(size(te))
-            end
-            events = events + 1; % Event occurred
-        else
-            break; % Simulation is finished
-        end
+        % if ~isempty(te)
+        %     if size(te) ~= 1
+        %         disp(size(te))
+        %     end
+        %     events = events + 1; % Event occurred
+        % else
+        %     break; % Simulation is finished
+        % end
     end
     tTotal = tTotal(1:ind);
     xTotal = xTotal(1:ind, :);

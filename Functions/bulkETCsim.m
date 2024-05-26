@@ -40,10 +40,18 @@ function [sig_val, total_events] = bulkETCsim(Nsigma,sigma_min,sigma_max, Ninit,
             x0 = x0_set(:,init_cond_ind);
             [~, xTotal, events] = simETC(tspan, x0, sigma);
             event_tot = event_tot + events;
-            if round(xTotal(end,1:2)) == 0 % Check if solution was stable
-                stable(ind, init_cond_ind) = 1;
+            if dist == 0
+                if round(xTotal(end,1:2)) == 0 % Check if solution was stable
+                    stable(ind, init_cond_ind) = 1;
+                else
+                    disp([sigma, init_cond_ind, round(xTotal(end,1:2))])
+                end
             else
-                disp([sigma, init_cond_ind, round(xTotal(end,1:2))])
+                if round(xTotal(end,1:2)/10)*10 == 0 % Check if solution was stable
+                    stable(ind, init_cond_ind) = 1;
+                else
+                    disp([sigma, init_cond_ind, round(xTotal(end,1:2))])
+                end
             end
         end
         % if plotastate

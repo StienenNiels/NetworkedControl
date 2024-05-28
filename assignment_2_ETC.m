@@ -2,6 +2,7 @@ clear
 clc
 
 addpath("Functions\")
+addpath("Images\")
 
 set(groot,'defaulttextinterpreter','latex');  
 set(groot, 'defaultAxesTickLabelInterpreter','latex');  
@@ -90,41 +91,86 @@ Ninit = 10;
 
 bulk_hs_sim(Ninit,2, 10, hs_avg, 0)
 
-%% Question 4.4
-% clc
-% Ninit = 5;
-% [sig_val, total_events1] = bulkETCsim(10,0.01,0.95, Ninit,1, 30, 1);
-% [~, total_events2]       = bulkETCsim(10,0.01,0.95, Ninit,1, 30, 2);
-% [~, total_events3]       = bulkETCsim(10,0.01,0.95, Ninit,1, 30, 3);
-% hs1 = T_end./(total_events1/Ninit);
-% hs2 = T_end./(total_events2/Ninit);
-% hs3 = T_end./(total_events3/Ninit);
-% [~,hs_ind] = max(hs1);
-% 
-% figure(441), clf;
-% hold on;
-% plot(sig_val, hs1, '-o', 'LineWidth', 1.5);
-% plot(sig_val, hs2, '-o', 'LineWidth', 1.5);
-% plot(sig_val, hs3, '-o', 'LineWidth', 1.5);
-% % plot(sig_val(hs_ind), hs(hs_ind),'.', "MarkerSize",25, "Color","#77AC30");
-% ylim([0, 0.05])
-% yll = ylabel('$h_{avg}$');
-% fontsize(yll,15,"points");
-% xl = xlabel('$\sigma$');
-% fontsize(xl,15,"points");
-% xlim([0,1])
-% lgd = legend('$d_1$', '$d_2$', '$d_3$', ...
-%      "Location","northeast");
-% fontsize(lgd,11,"points");
-% grid on;
-% set(gcf, "Theme", "light"); % Uncomment for report plots
-% 
-% Ninit = 5;
-% [sig_val, total_events] = bulkETCsim(10,0.01,0.95, Ninit,2, 30, 2);
-% hs = T_end./(total_events/Ninit);
-% [~,hs_ind] = max(hs);
 
-singleETCsim(0.2, [0;0], 30, 3)
+a = 5;
+b = 9;
+c = 8;
+
+A = [0.3+a-b, 0.5-c;
+     0, 1];
+B = [0;1];
+
+p = [-1-2j, -1+2j];
+K = place(A,B,p);
+A_cl = c2d_zoh(A, B, K, 0, hs_avg, 0);
+stable_43 = sr(A_cl)
+
+%% Question 4.4
+clc
+Ninit = 5;
+init_max = 1;
+x0_set = -init_max + init_max * rand(2, Ninit);
+T_end = 20;
+[sig_val, total_events0] = bulkETCsim_dist(10,0.01,0.95, x0_set, T_end, 0);
+[~, total_events1]       = bulkETCsim_dist(10,0.01,0.95, x0_set, T_end, 1);
+[~, total_events2]       = bulkETCsim_dist(10,0.01,0.95, x0_set, T_end, 2);
+[~, total_events3]       = bulkETCsim_dist(10,0.01,0.95, x0_set, T_end, 3);
+hs0 = T_end./(total_events0/Ninit);
+hs1 = T_end./(total_events1/Ninit);
+hs2 = T_end./(total_events2/Ninit);
+hs3 = T_end./(total_events3/Ninit);
+% [~,hs_ind] = max(hs1);
+
+figure(441), clf;
+hold on;
+plot(sig_val, hs0, '-o', 'LineWidth', 1.5);
+plot(sig_val, hs1, '-o', 'LineWidth', 1.5);
+plot(sig_val, hs2, '-o', 'LineWidth', 1.5);
+plot(sig_val, hs3, '-o', 'LineWidth', 1.5);
+% plot(sig_val(hs_ind), hs(hs_ind),'.', "MarkerSize",25, "Color","#77AC30");
+% ylim([0, 0.05])
+yll = ylabel('$h_{avg}$');
+fontsize(yll,15,"points");
+xl = xlabel('$\sigma$');
+fontsize(xl,15,"points");
+xlim([0,1])
+lgd = legend('$d_0$','$d_1$', '$d_2$', '$d_3$', ...
+     "Location","northeast");
+fontsize(lgd,11,"points");
+grid on;
+set(gcf, "Theme", "dark"); % Uncomment for report plots
+
+
 
 %% Question 4.5
+clc
+Ninit = 10;
+init_max = 1;
+x0_set = -[init_max;init_max] + init_max * rand(2, Ninit);
+T_end = 20;
+[sig_val, total_events0] = bulkETCsim_dist(10,0.01,0.95, x0_set, T_end, 0);
+[~, total_events1]       = bulkETCsim_eps(10,0.01,0.95, x0_set, T_end, 0);
+hs0 = T_end./(total_events0/Ninit);
+hs1 = T_end./(total_events1/Ninit);
+% [~,hs_ind] = max(hs1);
 
+figure(451), clf;
+hold on;
+plot(sig_val, hs0, '-o', 'LineWidth', 1.5);
+plot(sig_val, hs1, '-o', 'LineWidth', 1.5);
+% plot(sig_val(hs_ind), hs(hs_ind),'.', "MarkerSize",25, "Color","#77AC30");
+% ylim([0, 0.05])
+yll = ylabel('$h_{avg}$');
+fontsize(yll,15,"points");
+xl = xlabel('$\sigma$');
+fontsize(xl,15,"points");
+xlim([0,1])
+lgd = legend('$\phi(\xi(t), \xi(s_k)) \leq 0$','$\phi(\xi(t), \xi(s_k)) \leq 0.1$', ...
+     "Location","northeast");
+fontsize(lgd,11,"points");
+grid on;
+set(gcf, "Theme", "dark"); % Uncomment for report plots
+
+
+%% Generate some state trajectories
+singleETCsim(0.2, [0;0], 30, 3)

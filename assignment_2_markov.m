@@ -44,28 +44,28 @@ stable = zeros(size(h_range));
 
 i = 1;
 
-% % Method 1
-% warning off
-% for h = h_range
-%     [A01, A10, A11, A0j, A1j] = c2d_combi_markov(A1,A2,B,K1,K2,h);
-%     cvx_begin sdp quiet
-%         variable P(6,6,7) semidefinite
-%         subject to
-%             A0j'*(p(1,3)*P(:,:,3)+p(1,4)*P(:,:,4)+p(1,5)*P(:,:,5))*A0j -P(:,:,1) +Q <= 0;
-%             A1j'*(p(2,3)*P(:,:,3)+p(2,4)*P(:,:,4)+p(2,5)*P(:,:,5))*A1j -P(:,:,2) +Q <= 0;
-%             A01'*(p(3,6)*P(:,:,6)+p(3,7)*P(:,:,7)                )*A01 -P(:,:,3) +Q <= 0;
-%             A11'*(p(4,6)*P(:,:,6)+p(4,7)*P(:,:,7)                )*A11 -P(:,:,4) +Q <= 0;
-%             A10'*(p(5,6)*P(:,:,6)+p(5,7)*P(:,:,7)                )*A10 -P(:,:,5) +Q <= 0;
-%             A0j'*(p(6,1)*P(:,:,1)+p(6,2)*P(:,:,2)                )*A0j -P(:,:,6) +Q <= 0;
-%             A1j'*(p(7,1)*P(:,:,1)+p(7,2)*P(:,:,2)                )*A1j -P(:,:,7) +Q <= 0;
-%     cvx_end
-%     stable(i) = strcmp(cvx_status, 'Solved');
-%     if ~stable(i)
-%         break
-%     end
-%     i = i+1;
-% end
-% warning on
+% Method 1
+warning off
+for h = h_range
+    [A01, A10, A11, A0j, A1j] = c2d_combi_markov(A1,A2,B,K1,K2,h);
+    cvx_begin sdp quiet
+        variable P(6,6,7) semidefinite
+        subject to
+            A0j'*(p(1,3)*P(:,:,3)+p(1,4)*P(:,:,4)+p(1,5)*P(:,:,5))*A0j -P(:,:,1) +Q <= 0;
+            A1j'*(p(2,3)*P(:,:,3)+p(2,4)*P(:,:,4)+p(2,5)*P(:,:,5))*A1j -P(:,:,2) +Q <= 0;
+            A01'*(p(3,6)*P(:,:,6)+p(3,7)*P(:,:,7)                )*A01 -P(:,:,3) +Q <= 0;
+            A11'*(p(4,6)*P(:,:,6)+p(4,7)*P(:,:,7)                )*A11 -P(:,:,4) +Q <= 0;
+            A10'*(p(5,6)*P(:,:,6)+p(5,7)*P(:,:,7)                )*A10 -P(:,:,5) +Q <= 0;
+            A0j'*(p(6,1)*P(:,:,1)+p(6,2)*P(:,:,2)                )*A0j -P(:,:,6) +Q <= 0;
+            A1j'*(p(7,1)*P(:,:,1)+p(7,2)*P(:,:,2)                )*A1j -P(:,:,7) +Q <= 0;
+    cvx_end
+    stable(i) = strcmp(cvx_status, 'Solved');
+    if ~stable(i)
+        break
+    end
+    i = i+1;
+end
+warning on
 
 % Method 3
 warning off

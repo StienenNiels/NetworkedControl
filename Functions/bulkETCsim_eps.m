@@ -1,4 +1,4 @@
-function [sig_val, total_events] = bulkETCsim_eps(Nsigma,sigma_min,sigma_max, x0_set, T_end, dist)
+function [sig_val, total_events] = bulkETCsim_eps(Nsigma,sigma_min,sigma_max, x0_set, T_end, dist, eps)
 
     student_id = 5595738;
     a = 5;
@@ -29,7 +29,7 @@ function [sig_val, total_events] = bulkETCsim_eps(Nsigma,sigma_min,sigma_max, x0
     % Initialize zero matrices
     total_events = zeros(length(sig_val),1);
     stable = zeros(length(sig_val), size(x0_set, 2));
-    simETC = @(tspan, x0, sigma) simETCsystem_eps(tspan, x0, sigma, A, B, K, P, Q, dist);
+    simETC = @(tspan, x0, sigma) simETCsystem_eps(tspan, x0, sigma, A, B, K, P, Q, dist, eps);
     
     tic
     for ind = 1:length(sig_val)

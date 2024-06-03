@@ -134,11 +134,11 @@ fontsize(yll,15,"points");
 xl = xlabel('$\sigma$');
 fontsize(xl,15,"points");
 xlim([0,1])
-lgd = legend('$d_0$','$d_1$', '$d_2$', '$d_3$', ...
+lgd = legend('$d_0=[0,0]^T$','$d_1=0.1[sin(t), cos(t)]^T$', '$d_2=[1,1]^Trnd()$', '$d_3=0.1[|sin(t)|, -|cos(t)|]^T$', ...
      "Location","northeast");
 fontsize(lgd,11,"points");
 grid on;
-set(gcf, "Theme", "dark"); % Uncomment for report plots
+set(gcf, "Theme", "light"); % Uncomment for report plots
 
 
 
@@ -149,15 +149,21 @@ init_max = 1;
 x0_set = -[init_max;init_max] + init_max * rand(2, Ninit);
 T_end = 20;
 [sig_val, total_events0] = bulkETCsim_dist(10,0.01,0.95, x0_set, T_end, 0);
-[~, total_events1]       = bulkETCsim_eps(10,0.01,0.95, x0_set, T_end, 0);
+[~, total_events1]       = bulkETCsim_eps(10,0.01,0.95, x0_set, T_end, 0, 1e-8);
+[~, total_events2]       = bulkETCsim_eps(10,0.01,0.95, x0_set, T_end, 0, 1e-6);
+[~, total_events3]       = bulkETCsim_eps(10,0.01,0.95, x0_set, T_end, 0, 1e-4);
 hs0 = T_end./(total_events0/Ninit);
 hs1 = T_end./(total_events1/Ninit);
+hs2 = T_end./(total_events2/Ninit);
+hs3 = T_end./(total_events3/Ninit);
 % [~,hs_ind] = max(hs1);
 
 figure(451), clf;
 hold on;
 plot(sig_val, hs0, '-o', 'LineWidth', 1.5);
 plot(sig_val, hs1, '-o', 'LineWidth', 1.5);
+plot(sig_val, hs2, '-o', 'LineWidth', 1.5);
+plot(sig_val, hs3, '-o', 'LineWidth', 1.5);
 % plot(sig_val(hs_ind), hs(hs_ind),'.', "MarkerSize",25, "Color","#77AC30");
 % ylim([0, 0.05])
 yll = ylabel('$h_{avg}$');
@@ -165,12 +171,41 @@ fontsize(yll,15,"points");
 xl = xlabel('$\sigma$');
 fontsize(xl,15,"points");
 xlim([0,1])
-lgd = legend('$\phi(\xi(t), \xi(s_k)) \leq 0$','$\phi(\xi(t), \xi(s_k)) \leq 0.1$', ...
+lgd = legend('$\phi(\xi(t), \xi(s_k)) \leq 0$','$\phi(\xi(t), \xi(s_k)) \leq 10^{-8}$','$\phi(\xi(t), \xi(s_k)) \leq 10^{-6}$','$\phi(\xi(t), \xi(s_k)) \leq 10^{-4}$', ...
      "Location","northeast");
 fontsize(lgd,11,"points");
 grid on;
-set(gcf, "Theme", "dark"); % Uncomment for report plots
+set(gcf, "Theme", "light"); % Uncomment for report plots
 
 
 %% Generate some state trajectories
-singleETCsim(0.2, [0;0], 30, 3)
+clc
+
+% State trajectories for sigma variations
+singleETCsim(0.01, [1;0], 10, 0, 0)
+singleETCsim(0.4, [1;0], 10, 0, 0)
+singleETCsim(0.8, [1;0], 10, 0, 0)
+
+%%
+% State trajectories for ic variations
+singleETCsim(0.04, [10;3], 10, 0, 0)
+singleETCsim(0.04, [-5;7], 10, 0, 0)
+singleETCsim(0.04, [1;-1], 10, 0, 0)
+
+%%
+% State trajectories for disturbance variations
+singleETCsim(0.04, [1;0], 30, 0, 0)
+singleETCsim(0.04, [1;0], 30, 1, 0)
+singleETCsim(0.04, [1;0], 30, 2, 0)
+singleETCsim(0.04, [1;0], 30, 3, 0)
+
+%%
+% State trajectories for epsilon variations
+singleETCsim(0.04, [1;0], 10, 0, 0)
+singleETCsim(0.04, [1;0], 10, 0, 1e-8)
+singleETCsim(0.04, [1;0], 10, 0, 1e-6)
+singleETCsim(0.04, [1;0], 10, 0, 1e-4)
+singleETCsim(0.04, [1;0], 10, 0, 1e-2)
+singleETCsim(0.04, [1;0], 10, 0, 0.9)
+
+

@@ -1,4 +1,4 @@
-function [tTotal, xTotal, events] = simETCsystem_eps(tspan, x0, sigma, A, B, K, P, Q, dist)
+function [tTotal, xTotal, events] = simETCsystem_eps(tspan, x0, sigma, A, B, K, P, Q, dist, eps)
     % Initialize system
     Nguess = round(tspan(2)/0.01);
     tTotal = zeros(1, Nguess);
@@ -11,7 +11,7 @@ function [tTotal, xTotal, events] = simETCsystem_eps(tspan, x0, sigma, A, B, K, 
 
     ind = 1;
 
-    Efun = @(t,x) eventFunction_eps(t, x, sigma, B, K, P, Q);
+    Efun = @(t,x) eventFunction_eps(t, x, sigma, B, K, P, Q, eps);
 
     % Run simulation
     while tTotal(ind) < tspan(2)

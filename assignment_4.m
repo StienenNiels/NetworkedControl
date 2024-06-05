@@ -1,7 +1,7 @@
 clear
 clc
 
-addpath("Functions\")
+addpath("Functions_A4\")
 addpath("Images\")
 
 set(groot,'defaulttextinterpreter','latex');  
@@ -10,15 +10,21 @@ set(groot, 'defaultLegendInterpreter','latex');
 
 % state vector is (x,y,xdot,ydot)
 aircraft; % Load the given parameters
+Planes = planes_gen(); % Define structures
 
 % Create structures for each plane to make workspace more structured
-for i = 1:445
-    eval(sprintf('P%d.A = A%d;', i, i));
-    eval(sprintf('P%d.B = B%d;', i, i));
-    eval(sprintf('P%d.x0 = x0%d;', i, i));
+for i = 1:4
+    Planes(i).plane = i;
+    Planes(i).Tf = Tfinal;
+    Planes(i).umax = umax;
+    Planes(i).A = eval(sprintf('A%d;', i));
+    Planes(i).B = eval(sprintf('B%d;', i));
+    Planes(i).x0 = eval(sprintf('x0%d;', i));
+    Planes(i) = predmodgen(Planes(i));
+    Planes(i) = optgen(Planes(i));
 end
-clearvars -except P1 P2 P3 P4 Tfinal umax
+dim = Planes(1).dim;
+clearvars -except Planes Tfinal umax dim
 
-
-% Objective
-% Write function to generate prediction matrices for Np steps
+%% Centralized solution
+central_sol(Planes, 1);

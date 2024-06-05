@@ -15,7 +15,7 @@ function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
         eval(sprintf('traj.x%d = trajectory;', i));
     end
     % Final position where planes are converged
-    xf = traj.x1(end-3:end);
+    xf = traj.x1(:,end);
 
     % Spruce it up a bit bro, you can do better
     if plotgen
@@ -25,6 +25,7 @@ function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
         plot(traj.x2(1,:),traj.x2(2,:))
         plot(traj.x3(1,:),traj.x3(2,:))
         plot(traj.x4(1,:),traj.x4(2,:))
+        plot(xf(1),xf(2),'Marker','+', 'MarkerSize',15, 'LineWidth',2)
     end
 end
 

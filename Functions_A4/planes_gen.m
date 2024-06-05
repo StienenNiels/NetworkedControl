@@ -10,7 +10,7 @@ strucfields = struct('plane', [], ... % Plane number
                      'T',     [], ... % State pred.
                      'S',     [], ... % Input pred.
                      'H',     [], ... % Cost fun H
-                     'h',     [],  ... % Cost fun h
+                     'h',     [], ... % Cost fun h
                      'A_eq',  [], ... % x_f constraints
                      'b_eq',  [], ... % x_f constraints
                      'A_u',   [], ... % Control input constraints

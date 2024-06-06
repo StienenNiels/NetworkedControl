@@ -28,6 +28,19 @@ clearvars -except Planes Tfinal umax dim
 
 
 %% Centralized solution
-traj = central_sol(Planes, 1);
+[traj_central, xf] = central_sol(Planes, 0);
+
+%% Dual decomposed solution
+traj_dual = dual_sol(Planes, 0);
 
 %%
+for i = 1:4
+    eval(sprintf('traj_error.x%d = traj_central.x%d -traj_dual.x%d;', i,i,i));
+end
+figure(1),clf
+hold on
+plot(traj_error.x1(1,:),traj_error.x1(2,:))
+plot(traj_error.x2(1,:),traj_error.x2(2,:))
+plot(traj_error.x3(1,:),traj_error.x3(2,:))
+plot(traj_error.x4(1,:),traj_error.x4(2,:))
+plot(xf(1),xf(2),'Marker','+', 'MarkerSize',15, 'LineWidth',2)

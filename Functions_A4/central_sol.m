@@ -1,5 +1,5 @@
 function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
-    
+    tic
     H=[];h=[];A_eq=[];b_eq=[];A_u=[];b_u=[];
     for i = 1:4
         [H, h, A_eq, b_eq, A_u, b_u] = central_gen(Planes(i), H, h, A_eq, b_eq, A_u, b_u);
@@ -7,7 +7,8 @@ function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
     Tfinal = Planes(1).Tf;
 
     % Solve the central optimization problem
-    [u,fval,exitflag,output,lambda] = quadprog(H,h',A_u,b_u,A_eq,-b_eq);
+    opts = optimoptions('quadprog', 'Display', 'off');
+    [u,fval,exitflag,output,lambda] = quadprog(H,h,A_u,b_u,A_eq,-b_eq,[],[],[],opts);
     
     % Calculate the trajectory for each plane
     for i = 1:4
@@ -27,6 +28,7 @@ function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
         plot(traj.x4(1,:),traj.x4(2,:))
         plot(xf(1),xf(2),'Marker','+', 'MarkerSize',15, 'LineWidth',2)
     end
+    toc
 end
 
 % Combine all matrices into one large problem to solve with quadprog

@@ -26,5 +26,8 @@ end
 dim = Planes(1).dim;
 clearvars -except Planes Tfinal umax dim
 
+
 %% Centralized solution
 traj = central_sol(Planes, 1);
+
+%%

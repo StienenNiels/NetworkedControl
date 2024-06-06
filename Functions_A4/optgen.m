@@ -10,8 +10,9 @@ umax = plane.umax;
 Tf = plane.Tf;
 
 % Cost function
+% u_opt = u^T*H*u + 2*h'*u
 plane.H = S'*S + eye(dim.N*dim.nu);
-plane.h = 2*(S'*T*x0)';
+plane.h = (S'*T*x0)';
 
 % Plane final state equality
 plane.A_eq = S(dim.nx*(dim.N-1)+1:end,:);

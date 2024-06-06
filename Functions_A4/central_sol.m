@@ -7,7 +7,7 @@ function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
     Tfinal = Planes(1).Tf;
 
     % Solve the central optimization problem
-    [u,fval,exitflag,output,lambda] = quadprog(2*H,h',A_u,b_u,A_eq,-b_eq);
+    [u,fval,exitflag,output,lambda] = quadprog(H,h',A_u,b_u,A_eq,-b_eq);
     
     % Calculate the trajectory for each plane
     for i = 1:4

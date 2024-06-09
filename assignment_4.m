@@ -71,4 +71,25 @@ yscale('log')
 % Just need to make plots of the results
 
 %% Consensus based approach
+[~, a1e_1] = consensus_sol(Planes, 4e-1, 0, 0);
+avg_a1e_1 = err_norm(xf_central,a1e_1,1);
+[~, a1e_2] = consensus_sol(Planes, 4e-1, 1, 0);
+avg_a1e_2 = err_norm(xf_central,a1e_2,1);
+[~, a1e_3] = consensus_sol(Planes, 4e-1, 2, 0);
+avg_a1e_3 = err_norm(xf_central,a1e_3,1);
+[~, a1e_4] = consensus_sol(Planes, 4e-1, 5, 0);
+avg_a1e_4 = err_norm(xf_central,a1e_4,1);
+[~, a1e_5] = consensus_sol(Planes, 4e-1, 10, 0);
+avg_a1e_5 = err_norm(xf_central,a1e_5,1);
+[~, a1e_6] = consensus_sol(Planes, 4e-1, 20, 0);
+avg_a1e_6 = err_norm(xf_central,a1e_6,1);
 
+figure(34), clf;
+hold on
+plot(avg_a1e_1);
+plot(avg_a1e_2);
+plot(avg_a1e_3);
+plot(avg_a1e_4);
+plot(avg_a1e_5);
+plot(avg_a1e_6);
+yscale('log')

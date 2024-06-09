@@ -1,4 +1,4 @@
-function [traj,xf,u,lambda,fval,exitflag,output,lam] = consensus_sol(Planes, alpha, phi, plotgen)
+function [traj,xf,u,lambda,fval,exitflag,output,lam] = ADMM_consensus_sol(Planes, rho, plotgen)
     % Function for solving the dual decomposition problem
     tic
 
@@ -9,29 +9,26 @@ function [traj,xf,u,lambda,fval,exitflag,output,lam] = consensus_sol(Planes, alp
     iter = 0; % Iteration counter
     dim = Planes(1).dim;
     Tf = Planes(1).Tf;
-    xf = zeros(4*dim.nx,2700);
-    u  = zeros(Tf*4*dim.nu,2700);
+    xf = zeros(4*dim.nx,3000);
+    u  = zeros(Tf*4*dim.nu,3000);
     opts = optimoptions('quadprog', 'Display', 'off');
-    xf_con = repmat((Planes(1).x0+Planes(2).x0+Planes(3).x0+Planes(4).x0)/4,4,1);
+    xf_con = zeros(4,3000);
     lambda = zeros(16,1);
-    W = [0.75, 0.25, 0,    0;
-         0.25, 0.5,  0.25, 0;
-         0,    0.25, 0.5,  0.25;
-         0,    0,    0.25, 0.75];
-    W=kron(W,eye(4));
 
     while dxf > tol
         iter = iter + 1;
         for i=1:4
-            h = Planes(i).h + (0.5*lambda(4*(i-1)+1:4*(i))'*Planes(i).A_eq)';
-            [u_sol,fval,exitflag,output,lam] = quadprog(Planes(i).H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
+            H = Planes(i).H + rho*Planes(i).A_eq'*Planes(i).A_eq;
+            % Avoid Hessian not symmetric warning
+            H = (H+H')/2;
+            h = Planes(i).h + (0.5*lambda(4*(i-1)+1:4*(i))'*Planes(i).A_eq + rho*(Planes(i).b_eq-xf_con(:,iter))'*Planes(i).A_eq)';
+            [u_sol,fval,exitflag,output,lam] = quadprog(H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
             u((Tf*2)*(i-1)+1:(Tf*2)*i,iter) = u_sol;
-            xf_con(dim.nx*(i-1)+1:dim.nx*i) = Planes(i).A_eq*u_sol + Planes(i).b_eq;
-            xf(dim.nx*(i-1)+1:dim.nx*i,iter) = xf_con(dim.nx*(i-1)+1:dim.nx*i);
+            xf(dim.nx*(i-1)+1:dim.nx*i,iter) = Planes(i).A_eq*u_sol + Planes(i).b_eq;
+            xf_con(:,iter+1) = xf_con(:,iter+1) + (Planes(i).A_eq*u_sol + Planes(i).b_eq + lambda(dim.nx*(i-1)+1:dim.nx*i)/rho)/4;
         end
         
-        xf_con = W^phi*(xf_con);
-        lambda = lambda + alpha*(xf(:,iter)-xf_con);
+        lambda = lambda + rho*(xf(:,iter)-repmat(xf_con(:,iter+1),4,1));
 
         % Check all relative options for convergence
         dxf = max([norm(xf(dim.nx*0+1:dim.nx*1,iter)-xf(dim.nx*1+1:dim.nx*2,iter)), ...

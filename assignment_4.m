@@ -81,7 +81,7 @@ avg_a1e_3 = err_norm(xf_central,a1e_3,1);
 avg_a1e_4 = err_norm(xf_central,a1e_4,1);
 [~, a1e_5] = consensus_sol(Planes, 4e-1, 10, 0);
 avg_a1e_5 = err_norm(xf_central,a1e_5,1);
-[~, a1e_6] = consensus_sol(Planes, 4e-1, 20, 0);
+[~, a1e_6] = consensus_sol(Planes, 4e-1, 100, 0);
 avg_a1e_6 = err_norm(xf_central,a1e_6,1);
 
 figure(34), clf;
@@ -93,3 +93,35 @@ plot(avg_a1e_4);
 plot(avg_a1e_5);
 plot(avg_a1e_6);
 yscale('log')
+legend
+
+%% Consensus ADMM
+rho = 1.5;
+[~, a1e_1] = ADMM_consensus_sol(Planes, rho, 0);
+avg_a1e_1 = err_norm(xf_central,a1e_1,1);
+rho = rho^2;
+[~, a1e_2] = ADMM_consensus_sol(Planes, rho, 0);
+avg_a1e_2 = err_norm(xf_central,a1e_2,1);
+rho = rho^2;
+[~, a1e_3] = ADMM_consensus_sol(Planes, rho, 0);
+avg_a1e_3 = err_norm(xf_central,a1e_3,1);
+rho = rho^2;
+[~, a1e_4] = ADMM_consensus_sol(Planes, rho, 0);
+avg_a1e_4 = err_norm(xf_central,a1e_4,1);
+rho = rho^2;
+[~, a1e_5] = ADMM_consensus_sol(Planes, rho, 0);
+avg_a1e_5 = err_norm(xf_central,a1e_5,1);
+rho = rho^2;
+[~, a1e_6] = ADMM_consensus_sol(Planes, rho, 0);
+avg_a1e_6 = err_norm(xf_central,a1e_6,1);
+
+figure(34), clf;
+hold on
+plot(avg_a1e_1);
+plot(avg_a1e_2);
+plot(avg_a1e_3);
+plot(avg_a1e_4);
+plot(avg_a1e_5);
+plot(avg_a1e_6);
+yscale('log')
+legend

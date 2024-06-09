@@ -18,7 +18,6 @@ function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
     % Final position where planes are converged
     xf = traj.x1(:,end);
 
-    % Spruce it up a bit bro, you can do better
     if plotgen
         figure(1),clf
         hold on

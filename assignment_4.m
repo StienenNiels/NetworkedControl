@@ -28,19 +28,47 @@ clearvars -except Planes Tfinal umax dim
 
 
 %% Centralized solution
-[traj_central, xf] = central_sol(Planes, 0);
+[traj_central, xf_central] = central_sol(Planes, 0);
 
 %% Dual decomposed solution
-traj_dual = dual_sol(Planes, 0);
-
+alpha = 0.1;
+[traj_dual, xf_dual] = dual_sol(Planes, alpha, 0, 0); % 0 for constant alpha
 %%
-for i = 1:4
-    eval(sprintf('traj_error.x%d = traj_central.x%d -traj_dual.x%d;', i,i,i));
-end
-figure(1),clf
+% Still need to make the figures of the trajectories
+%
+logerr_plot(xf_central,xf_dual)
+
+%% Investigate the effect of step size and step size update sequence
+[~, a1e_1] = dual_sol(Planes, 1e-1, 0, 1); % 0 for constant alpha
+avg_a1e_1 = err_norm(xf_central,a1e_1,1);
+[~, a1e_1_var] = dual_sol(Planes, 5e-1, 1, 1); % 1 for variable alpha
+avg_a1e_1_var = err_norm(xf_central,a1e_1_var,1);
+
+figure(34), clf;
 hold on
-plot(traj_error.x1(1,:),traj_error.x1(2,:))
-plot(traj_error.x2(1,:),traj_error.x2(2,:))
-plot(traj_error.x3(1,:),traj_error.x3(2,:))
-plot(traj_error.x4(1,:),traj_error.x4(2,:))
-plot(xf(1),xf(2),'Marker','+', 'MarkerSize',15, 'LineWidth',2)
+plot(avg_a1e_1);
+plot(avg_a1e_1_var);
+yscale('log')
+% [~, a1e_3] = dual_sol(Planes, 1e-3, 0, 0); % 0 for constant alpha
+% [~, a1e_4] = dual_sol(Planes, 1e-4, 0, 0); % 0 for constant alpha
+
+
+%% Nesterov accelerated method of subgradient updates
+[~, a1e_1] = dual_sol(Planes, 4e-1, 0, 0); % 0 for constant alpha
+avg_a1e_1 = err_norm(xf_central,a1e_1,1);
+[~, a1e_1_var] = dual_sol(Planes, 9e-1, 1, 0); % 1 for variable alpha
+avg_a1e_1_var = err_norm(xf_central,a1e_1_var,1);
+[~, a1e_1_nes] = dual_sol(Planes, 1e-1, 2, 0); % 2 for nesterov's
+avg_a1e_1_nes = err_norm(xf_central,a1e_1_nes,1);
+
+figure(34), clf;
+hold on
+plot(avg_a1e_1);
+plot(avg_a1e_1_var);
+plot(avg_a1e_1_nes);
+yscale('log')
+
+% Just need to make plots of the results
+
+%% Consensus based approach
+

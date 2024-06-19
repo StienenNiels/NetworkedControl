@@ -26,102 +26,71 @@ end
 dim = Planes(1).dim;
 clearvars -except Planes Tfinal umax dim
 
-
-%% Centralized solution
+% %% Centralized solution
 [traj_central, xf_central] = central_sol(Planes, 0);
 
 %% Dual decomposed solution
-alpha = 0.1;
-[traj_dual, xf_dual] = dual_sol(Planes, alpha, 0, 0); % 0 for constant alpha
-%%
-% Still need to make the figures of the trajectories
-%
+alpha = 0.5;
+[~,xf_dual] = general_sol(Planes, opt_sim("dual", "constant", alpha, 0, 0, 0, "iteration", 3000, 1e-6), xf_central, 1);
 logerr_plot(xf_central,xf_dual)
 
 %% Investigate the effect of step size and step size update sequence
-[~, a1e_1] = dual_sol(Planes, 1e-1, 0, 1); % 0 for constant alpha
-avg_a1e_1 = err_norm(xf_central,a1e_1,1);
-[~, a1e_1_var] = dual_sol(Planes, 5e-1, 1, 1); % 1 for variable alpha
-avg_a1e_1_var = err_norm(xf_central,a1e_1_var,1);
+alpha = [0.2, 0.5];
+xf_ac = cell(1, length(alpha));
+for i = 1:length(alpha)
+    xf_ac{i} = general_sol(Planes, opt_sim("dual", "constant", alpha(i), 0, 0, 0, "iteration", 3000, 1e-6), xf_central, 1);
+end
+a1e_1_var = general_sol(Planes, opt_sim("dual", "variable", 5e-1, gamma, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
 
 figure(34), clf;
 hold on
-plot(avg_a1e_1);
-plot(avg_a1e_1_var);
+plot(xf_ac{1});
+plot(a1e_1_var);
 yscale('log')
-% [~, a1e_3] = dual_sol(Planes, 1e-3, 0, 0); % 0 for constant alpha
-% [~, a1e_4] = dual_sol(Planes, 1e-4, 0, 0); % 0 for constant alpha
-
 
 %% Nesterov accelerated method of subgradient updates
-[~, a1e_1] = dual_sol(Planes, 4e-1, 0, 0); % 0 for constant alpha
-avg_a1e_1 = err_norm(xf_central,a1e_1,1);
-[~, a1e_1_var] = dual_sol(Planes, 9e-1, 1, 0); % 1 for variable alpha
-avg_a1e_1_var = err_norm(xf_central,a1e_1_var,1);
-[~, a1e_1_nes] = dual_sol(Planes, 1e-1, 2, 0); % 2 for nesterov's
-avg_a1e_1_nes = err_norm(xf_central,a1e_1_nes,1);
+a1e_1_con = general_sol(Planes, opt_sim("dual", "constant", 4e-1, 0.8, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
+a1e_1_var = general_sol(Planes, opt_sim("dual", "variable", 9e-1, 0.8, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
+a1e_1_nes = general_sol(Planes, opt_sim("dual", "nesterov", 3e-1, 0.8, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
 
 figure(34), clf;
 hold on
-plot(avg_a1e_1);
-plot(avg_a1e_1_var);
-plot(avg_a1e_1_nes);
+plot(a1e_1_con);
+plot(a1e_1_var);
+plot(a1e_1_nes);
 yscale('log')
-
-% Just need to make plots of the results
 
 %% Consensus based approach
-[~, a1e_1] = consensus_sol(Planes, 4e-1, 0, 0);
-avg_a1e_1 = err_norm(xf_central,a1e_1,1);
-[~, a1e_2] = consensus_sol(Planes, 4e-1, 1, 0);
-avg_a1e_2 = err_norm(xf_central,a1e_2,1);
-[~, a1e_3] = consensus_sol(Planes, 4e-1, 2, 0);
-avg_a1e_3 = err_norm(xf_central,a1e_3,1);
-[~, a1e_4] = consensus_sol(Planes, 4e-1, 5, 0);
-avg_a1e_4 = err_norm(xf_central,a1e_4,1);
-[~, a1e_5] = consensus_sol(Planes, 4e-1, 10, 0);
-avg_a1e_5 = err_norm(xf_central,a1e_5,1);
-[~, a1e_6] = consensus_sol(Planes, 4e-1, 100, 0);
-avg_a1e_6 = err_norm(xf_central,a1e_6,1);
+phi = [1, 4, 10, 100];
+alpha = [0.4, 0.4, 0.4, 0.4];
+xf_phi = cell(1, length(phi));
+for i = 1:length(phi)
+    xf_phi{i} = general_sol(Planes, opt_sim("consensus", "constant", 0.9, 0, 0, phi(i), "iteration", 5000, 1e-6), xf_central, 0);
+end
 
 figure(34), clf;
+tiledlayout(2,2);
 hold on
-plot(avg_a1e_1);
-plot(avg_a1e_2);
-plot(avg_a1e_3);
-plot(avg_a1e_4);
-plot(avg_a1e_5);
-plot(avg_a1e_6);
-yscale('log')
-legend
+for i = 1:length(phi)
+    nexttile
+    plot(xf_phi{i}')
+    yscale('log')
+    ylim([1e-4, 1e1])
+    xlim([0,5000])
+end
+% legend
 
 %% Consensus ADMM
-rho = 1.5;
-[~, a1e_1] = ADMM_consensus_sol(Planes, rho, 0);
-avg_a1e_1 = err_norm(xf_central,a1e_1,1);
-rho = rho^2;
-[~, a1e_2] = ADMM_consensus_sol(Planes, rho, 0);
-avg_a1e_2 = err_norm(xf_central,a1e_2,1);
-rho = rho^2;
-[~, a1e_3] = ADMM_consensus_sol(Planes, rho, 0);
-avg_a1e_3 = err_norm(xf_central,a1e_3,1);
-rho = rho^2;
-[~, a1e_4] = ADMM_consensus_sol(Planes, rho, 0);
-avg_a1e_4 = err_norm(xf_central,a1e_4,1);
-rho = rho^2;
-[~, a1e_5] = ADMM_consensus_sol(Planes, rho, 0);
-avg_a1e_5 = err_norm(xf_central,a1e_5,1);
-rho = rho^2;
-[~, a1e_6] = ADMM_consensus_sol(Planes, rho, 0);
-avg_a1e_6 = err_norm(xf_central,a1e_6,1);
+rho = [1.5, 2, 5, 10];
+xf_rho = cell(1, length(rho));
+for i = 1:length(rho)
+    xf_rho{i} = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho(i), 0, "iteration", 1000, 1e-6), xf_central, 1);
+end
 
 figure(34), clf;
 hold on
-plot(avg_a1e_1);
-plot(avg_a1e_2);
-plot(avg_a1e_3);
-plot(avg_a1e_4);
-plot(avg_a1e_5);
-plot(avg_a1e_6);
+for i = 1:length(rho)
+    plot(xf_rho{i}')
+end
 yscale('log')
 legend

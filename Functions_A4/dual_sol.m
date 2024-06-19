@@ -5,7 +5,6 @@ function [traj,xf,u,lambda,fval,exitflag,output,lam] = dual_sol(Planes, alpha0, 
     % Initialize parameters
     tol = 1e-3; % Tolerance for x_i(T_final)
     dxf = inf; % Initialize the difference as +inf
-    % alpha = 0.1;
     iter = 0; % Iteration counter
     dim = Planes(1).dim;
     Tf = Planes(1).Tf;
@@ -43,7 +42,7 @@ function [traj,xf,u,lambda,fval,exitflag,output,lam] = dual_sol(Planes, alpha0, 
         elseif update_seq == 2
             % Nesterov's accelerated gradient
             alpha = alpha0;
-            gamma = 0.9;
+            gamma = 0.8;
         end
 
         gradf = alpha*[xf(1:dim.nx*1,iter)-xf(dim.nx*(2-1)+1:dim.nx*2,iter);
@@ -72,23 +71,11 @@ function [traj,xf,u,lambda,fval,exitflag,output,lam] = dual_sol(Planes, alpha0, 
     toc
 
     xf = xf(:,1:iter);
-
     Tf = Planes(1).Tf;
     
     % Calculate the trajectory for each plane
     for i = 1:4
         trajectory = [Planes(i).x0, reshape(Planes(i).T*Planes(i).x0 + Planes(i).S*u((Tf*2)*(i-1)+1:(Tf*2)*i,iter),4,[])]; 
         eval(sprintf('traj.x%d = trajectory;', i));
-    end
-
-    %% Plot
-    if plotgen
-        figure(2), clf;
-        hold on
-        plot(traj.x1(1,:),traj.x1(2,:))
-        plot(traj.x2(1,:),traj.x2(2,:))
-        plot(traj.x3(1,:),traj.x3(2,:))
-        plot(traj.x4(1,:),traj.x4(2,:))
-        % plot(xf(1),xf(2),'Marker','+', 'MarkerSize',15, 'LineWidth',2)
     end
 end

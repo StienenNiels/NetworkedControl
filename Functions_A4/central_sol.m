@@ -17,16 +17,6 @@ function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
     end
     % Final position where planes are converged
     xf = traj.x1(:,end);
-
-    if plotgen
-        figure(1),clf
-        hold on
-        plot(traj.x1(1,:),traj.x1(2,:))
-        plot(traj.x2(1,:),traj.x2(2,:))
-        plot(traj.x3(1,:),traj.x3(2,:))
-        plot(traj.x4(1,:),traj.x4(2,:))
-        plot(xf(1),xf(2),'Marker','+', 'MarkerSize',15, 'LineWidth',2)
-    end
     toc
 end
 

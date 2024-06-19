@@ -3,6 +3,7 @@ function logerr_plot(xf_central,xf_compare,filename)
         savefigure = 0;
         plotstate = 1;
     else
+        plotstate = 0;
         savefigure = 1;
     end
 

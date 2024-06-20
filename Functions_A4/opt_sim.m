@@ -9,8 +9,9 @@ function simtype = opt_sim(method, update_sequence, alpha, gamma, rho, phi, endc
     else
         error("Invalid endcondition chosen");
     end
-    if strcmp(update_sequence,"constant") || strcmp(update_sequence,"variable") || ...
-            strcmp(update_sequence,"variable_decrease") || strcmp(update_sequence,"nesterov")
+    if strcmp(update_sequence,"constant") || strcmp(update_sequence,"variable1") || ...
+            strcmp(update_sequence,"variable2") || strcmp(update_sequence,"variable3") || ...
+            strcmp(update_sequence,"nesterov")
         simtype.update_sequence = update_sequence;
     else
         error("Invalid update sequence chosen");

@@ -24,73 +24,98 @@ for i = 1:4
     Planes(i) = optgen(Planes(i));
 end
 dim = Planes(1).dim;
-clearvars -except Planes Tfinal umax dim
+clearvars -except Planes
 
-% %% Centralized solution
-[traj_central, xf_central] = central_sol(Planes, 0);
+% Centralized solution
+[traj_central, xf_central] = central_sol(Planes);
 
 %% Dual decomposed solution
 alpha = 0.5;
-[~,xf_dual] = general_sol(Planes, opt_sim("dual", "constant", alpha, 0, 0, 0, "iteration", 3000, 1e-6), xf_central, 1);
-logerr_plot(xf_central,xf_dual)
+[~,xf_dual,traj_dual] = general_sol(Planes, opt_sim("dual", "constant", alpha, 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+% 3 plots needed
+logerr_plot(xf_central,xf_dual, "1a_error")
+xyplane_plot(xf_central,traj_dual, "1a_XY")
+trajectories_plot(xf_central,traj_dual, "1a_traj")
+clearvars -except Planes xf_central
 
 %% Investigate the effect of step size and step size update sequence
-alpha = [0.2, 0.5];
+alpha = [0.1, 0.2, 0.4, 0.6, 0.9];
 xf_ac = cell(1, length(alpha));
+xf_av1 = cell(1, length(alpha));
+xf_av2 = cell(1, length(alpha));
+xf_av3 = cell(1, length(alpha));
 for i = 1:length(alpha)
-    xf_ac{i} = general_sol(Planes, opt_sim("dual", "constant", alpha(i), 0, 0, 0, "iteration", 3000, 1e-6), xf_central, 1);
+    xf_ac{i}  = general_sol(Planes, opt_sim("dual", "constant",  alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+    xf_av1{i} = general_sol(Planes, opt_sim("dual", "variable1", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+    xf_av2{i} = general_sol(Planes, opt_sim("dual", "variable2", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+    xf_av3{i} = general_sol(Planes, opt_sim("dual", "variable3", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
 end
-a1e_1_var = general_sol(Planes, opt_sim("dual", "variable", 5e-1, gamma, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
-
-figure(34), clf;
-hold on
-plot(xf_ac{1});
-plot(a1e_1_var);
-yscale('log')
+plot_info.alpha = alpha;
+logerr_cell_plot(xf_ac, plot_info, "constant", "1b_constant")
+logerr_cell_plot(xf_av1, plot_info, "variable1", "1b_variable1")
+logerr_cell_plot(xf_av2, plot_info, "variable2", "1b_variable2")
+logerr_cell_plot(xf_av3, plot_info, "variable3", "1b_variable3")
+clearvars -except Planes xf_central
 
 %% Nesterov accelerated method of subgradient updates
-a1e_1_con = general_sol(Planes, opt_sim("dual", "constant", 4e-1, 0.8, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
-a1e_1_var = general_sol(Planes, opt_sim("dual", "variable", 9e-1, 0.8, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
-a1e_1_nes = general_sol(Planes, opt_sim("dual", "nesterov", 3e-1, 0.8, rho, phi, "iteration", 3000, 1e-6), xf_central, 1);
+alpha = [0.1, 0.1, 0.1, 0.9, 0.9, 0.9];
+gamma = [0.5, 0.8, 0.9, 0.5, 0.8, 0.9];
+xf_nes = cell(1, length(alpha));
+for i = 1:length(alpha)
+    xf_nes{i}  = general_sol(Planes, opt_sim("dual", "nesterov",  alpha(i), gamma(i), 0, 0, "iteration", 500, 1e-6), xf_central, 1);
+end
 
-figure(34), clf;
-hold on
-plot(a1e_1_con);
-plot(a1e_1_var);
-plot(a1e_1_nes);
-yscale('log')
+plot_info.alpha = alpha;
+plot_info.gamma = gamma;
+logerr_cell_plot(xf_nes, plot_info, "nesterov", "1c_nesterov")
+clearvars -except Planes xf_central
+
+%% Comparison of all the above methods
+alpha = [0.7, 0.9, 0.9, 0.9, 0.2];
+gamma = [0.0, 0.0, 0.0, 0.0, 0.8];
+xf_comp = cell(1, 5);
+xf_comp{1} = general_sol(Planes, opt_sim("dual", "constant",  alpha(1), gamma(1), 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+xf_comp{2} = general_sol(Planes, opt_sim("dual", "variable1", alpha(2), gamma(2), 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+xf_comp{3} = general_sol(Planes, opt_sim("dual", "variable2", alpha(3), gamma(3), 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+xf_comp{4} = general_sol(Planes, opt_sim("dual", "variable3", alpha(4), gamma(4), 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+xf_comp{5} = general_sol(Planes, opt_sim("dual", "nesterov",  alpha(5), gamma(5), 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+
+plot_info.alpha = alpha;
+plot_info.gamma = gamma;
+logerr_cell_plot(xf_comp, plot_info, "dual_comp", "1c_comparison")
+clearvars -except Planes xf_central
 
 %% Consensus based approach
-phi = [1, 4, 10, 100];
-alpha = [0.4, 0.4, 0.4, 0.4];
+phi = [1, 5, 20, 50, 10, 50];
+alpha = [0.4, 0.4, 0.4, 0.4, 0.7, 0.7];
 xf_phi = cell(1, length(phi));
 for i = 1:length(phi)
-    xf_phi{i} = general_sol(Planes, opt_sim("consensus", "constant", 0.9, 0, 0, phi(i), "iteration", 5000, 1e-6), xf_central, 0);
+    [xf_phi{i},xf] = general_sol(Planes, opt_sim("consensus", "constant", alpha(i), 0, 0, phi(i), "iteration", 1500, 1e-6), xf_central, 1);
 end
 
-figure(34), clf;
-tiledlayout(2,2);
-hold on
-for i = 1:length(phi)
-    nexttile
-    plot(xf_phi{i}')
-    yscale('log')
-    ylim([1e-4, 1e1])
-    xlim([0,5000])
-end
-% legend
+plot_info.alpha = alpha;
+plot_info.phi = phi;
+logerr_cell_plot(xf_phi, plot_info, "consensus", "1d_consensus")
+clearvars -except Planes xf_central
 
 %% Consensus ADMM
-rho = [1.5, 2, 5, 10];
+rho = [0.5, 1, 1.5, 2, 5, 10, 100];
 xf_rho = cell(1, length(rho));
 for i = 1:length(rho)
     xf_rho{i} = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho(i), 0, "iteration", 1000, 1e-6), xf_central, 1);
 end
 
-figure(34), clf;
-hold on
+plot_info.rho = rho;
+logerr_cell_plot(xf_rho, plot_info, "ADMM")
+clearvars -except Planes xf_central
+
+%% Consensus ADMM optimal rho
+rho = 0.1:0.1:50;
+xf_rho = cell(1, length(rho));
 for i = 1:length(rho)
-    plot(xf_rho{i}')
+    xf_rho{i} = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho(i), 0, "convergence", 1000, 1e-3), xf_central, 1);
 end
-yscale('log')
-legend
+
+plot_info.rho = rho;
+logerr_cell_plot(xf_rho, plot_info, "ADMM")
+clearvars -except Planes xf_central

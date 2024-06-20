@@ -67,7 +67,7 @@ function logerr_cell_plot(xf,varstruc,legendtype,filename)
     end
 
     if savefigure
-        set(gcf, 'Position', [1000, 100, 500, 500]);
+        set(gcf, 'Position', [1000, 100, 500, 400]);
         set(gcf, "Theme", "light");
         filename = "Images\4_" + filename + ".pdf";
         exportgraphics(gcf,filename)

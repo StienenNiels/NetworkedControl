@@ -106,7 +106,7 @@ trajectories_plot(xf_central,traj_ADMM, "2a_traj")
 clearvars -except Planes xf_central
 
 %% Consensus ADMM varying rho
-rho = [1, 1.5, 2, 5, 6.5, 8.25, 10, 20];
+rho = [1, 1.5, 2, 5, 6.5, 8.5, 10.5, 20];
 xf_rho = cell(1, length(rho));
 for i = 1:length(rho)
     xf_rho{i} = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho(i), 0, "iteration", 500, 1e-6), xf_central, 1);

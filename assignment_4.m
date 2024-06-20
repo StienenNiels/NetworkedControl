@@ -38,22 +38,22 @@ trajectories_plot(xf_central,traj_dual, "1a_traj")
 clearvars -except Planes xf_central
 
 %% Investigate the effect of step size and step size update sequence
-alpha = [0.9, 1, 1.1];
+alpha = [0.1, 0.2, 0.4, 0.6, 0.9];
 xf_ac = cell(1, length(alpha));
 xf_av1 = cell(1, length(alpha));
 xf_av2 = cell(1, length(alpha));
 xf_av3 = cell(1, length(alpha));
 for i = 1:length(alpha)
     xf_ac{i}  = general_sol(Planes, opt_sim("dual", "constant",  alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
-    % xf_av1{i} = general_sol(Planes, opt_sim("dual", "variable1", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
-    % xf_av2{i} = general_sol(Planes, opt_sim("dual", "variable2", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
-    % xf_av3{i} = general_sol(Planes, opt_sim("dual", "variable3", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+    xf_av1{i} = general_sol(Planes, opt_sim("dual", "variable1", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+    xf_av2{i} = general_sol(Planes, opt_sim("dual", "variable2", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
+    xf_av3{i} = general_sol(Planes, opt_sim("dual", "variable3", alpha(i), 0, 0, 0, "iteration", 2000, 1e-6), xf_central, 1);
 end
 plot_info.alpha = alpha;
-logerr_cell_plot(xf_ac, plot_info, "constant")%, "1b_constant")
-% logerr_cell_plot(xf_av1, plot_info, "variable1", "1b_variable1")
-% logerr_cell_plot(xf_av2, plot_info, "variable2", "1b_variable2")
-% logerr_cell_plot(xf_av3, plot_info, "variable3", "1b_variable3")
+logerr_cell_plot(xf_ac, plot_info, "constant", "1b_constant")
+logerr_cell_plot(xf_av1, plot_info, "variable1", "1b_variable1")
+logerr_cell_plot(xf_av2, plot_info, "variable2", "1b_variable2")
+logerr_cell_plot(xf_av3, plot_info, "variable3", "1b_variable3")
 clearvars -except Planes xf_central
 
 %% Nesterov accelerated method of subgradient updates

@@ -95,6 +95,8 @@ function [xf_avg,xf,traj,u] = general_sol(Planes, simtype, xf_central, avg)
             % ADMM
             for i=1:4
                 H = Planes(i).H + rho*(Planes(i).A_eq'*Planes(i).A_eq);
+                % % Avoid Hessian not symmetric warning
+                % H = (H+H')/2;
                 h = Planes(i).h + (0.5*lambda_ADMM(4*(i-1)+1:4*(i))'*Planes(i).A_eq + rho*(Planes(i).b_eq-xf_con_ADMM(:,iter))'*Planes(i).A_eq)';
                 [u_sol,~,~,~,~] = quadprog(H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
                 u((Tf*2)*(i-1)+1:(Tf*2)*i,iter) = u_sol;

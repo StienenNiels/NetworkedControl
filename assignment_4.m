@@ -98,7 +98,7 @@ logerr_cell_plot(xf_phi, plot_info, "consensus", "1d_consensus")
 clearvars -except Planes xf_central
 
 %% Consensus ADMM
-rho = 7;
+rho = 5;
 [~,xf_ADMM,traj_ADMM] = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho, 0, "iteration", 200, 1e-6), xf_central, 1);
 logerr_plot(xf_central,xf_ADMM, "2a_error")
 xyplane_plot(xf_central,traj_ADMM, "2a_XY")

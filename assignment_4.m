@@ -99,23 +99,35 @@ logerr_cell_plot(xf_phi, plot_info, "consensus", "1d_consensus")
 clearvars -except Planes xf_central
 
 %% Consensus ADMM
-rho = [0.5, 1, 1.5, 2, 5, 10, 100];
+rho = 7;
+[~,xf_ADMM,traj_ADMM] = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho, 0, "iteration", 200, 1e-6), xf_central, 1);
+logerr_plot(xf_central,xf_ADMM, "2a_error")
+xyplane_plot(xf_central,traj_ADMM, "2a_XY")
+trajectories_plot(xf_central,traj_ADMM, "2a_traj")
+clearvars -except Planes xf_central
+
+%% Consensus ADMM varying rho
+rho = [0.5, 1, 1.5, 2, 6.7, 10, 20];
 xf_rho = cell(1, length(rho));
 for i = 1:length(rho)
     xf_rho{i} = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho(i), 0, "iteration", 1000, 1e-6), xf_central, 1);
 end
 
 plot_info.rho = rho;
-logerr_cell_plot(xf_rho, plot_info, "ADMM")
+logerr_cell_plot(xf_rho, plot_info, "ADMM", "2b_rho")
 clearvars -except Planes xf_central
 
 %% Consensus ADMM optimal rho
+% Needs to be balanced between fast convergence and lower steady state error
 rho = 0.1:0.1:50;
 xf_rho = cell(1, length(rho));
 for i = 1:length(rho)
-    xf_rho{i} = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho(i), 0, "convergence", 1000, 1e-3), xf_central, 1);
+    xf_rho{i} = general_sol(Planes, opt_sim("ADMM", "constant", 0, 0, rho(i), 0, "convergence", 220, 1e-5), xf_central, 1);
+    if mod(i, 20) == 0
+        disp(i);
+    end
 end
 
 plot_info.rho = rho;
-logerr_cell_plot(xf_rho, plot_info, "ADMM")
-clearvars -except Planes xf_central
+rho_opt_plot(xf_rho, plot_info, "rho")%, "2b_rho_optimal")
+% clearvars -except Planes xf_central

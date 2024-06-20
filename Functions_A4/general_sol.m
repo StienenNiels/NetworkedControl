@@ -1,6 +1,6 @@
 function [xf_avg,xf,traj,u] = general_sol(Planes, simtype, xf_central, avg)
     % Function for solving each problem
-    tic
+    % tic
 
     % Initialize parameters
     tol = simtype.tolerance; % Tolerance for x_i(T_final)
@@ -94,9 +94,9 @@ function [xf_avg,xf,traj,u] = general_sol(Planes, simtype, xf_central, avg)
         elseif strcmp(simtype.method, "ADMM")
             % ADMM
             for i=1:4
-                H = Planes(i).H + rho*Planes(i).A_eq'*Planes(i).A_eq;
-                % Avoid Hessian not symmetric warning
-                H = (H+H')/2;
+                H = Planes(i).H + rho*(Planes(i).A_eq'*Planes(i).A_eq);
+                % % Avoid Hessian not symmetric warning
+                % H = (H+H')/2;
                 h = Planes(i).h + (0.5*lambda_ADMM(4*(i-1)+1:4*(i))'*Planes(i).A_eq + rho*(Planes(i).b_eq-xf_con_ADMM(:,iter))'*Planes(i).A_eq)';
                 [u_sol,~,~,~,~] = quadprog(H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
                 u((Tf*2)*(i-1)+1:(Tf*2)*i,iter) = u_sol;
@@ -114,13 +114,14 @@ function [xf_avg,xf,traj,u] = general_sol(Planes, simtype, xf_central, avg)
                    norm(xf(dim.nx*1+1:dim.nx*2,iter)-xf(dim.nx*2+1:dim.nx*3,iter)), ...
                    norm(xf(dim.nx*2+1:dim.nx*3,iter)-xf(dim.nx*3+1:dim.nx*4,iter)), ...
                    norm(xf(dim.nx*1+1:dim.nx*2,iter)-xf(dim.nx*3+1:dim.nx*4,iter))]);
-        if strcmp(simtype.endcondition, "tolerance")
+        if strcmp(simtype.endcondition, "convergence")
             dxf = dxf_err;
-        elseif iter == max_iter
+        end
+        if iter == max_iter
             break
         end
     end
-    toc
+    % toc
 
     xf = xf(:,1:iter);
     Tf = Planes(1).Tf;

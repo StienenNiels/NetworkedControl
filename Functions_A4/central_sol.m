@@ -1,4 +1,4 @@
-function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes, plotgen)
+function [traj,xf,u,fval,exitflag,output,lambda] = central_sol(Planes)
     tic
     H=[];h=[];A_eq=[];b_eq=[];A_u=[];b_u=[];
     for i = 1:4
@@ -24,7 +24,7 @@ end
 function [H, h, A_eq, b_eq, A_u, b_u] = central_gen(plane, H, h, A_eq, b_eq, A_u, b_u)
     dim = plane.dim;
     H = blkdiag(H,plane.H);
-    h = [h,plane.h];
+    h = [h;plane.h];
     if plane.plane == 1
         A_eq = [repmat(plane.A_eq,[3, 1]),zeros(3*dim.nx,3*dim.nu*dim.N)];
         b_eq = repmat(plane.b_eq,[3, 1]);

@@ -1,15 +1,12 @@
-function [xf_avg,xf,traj,u,lambda_con,fval,exitflag,output,lam] = general_sol(Planes, simtype, xf_central, avg, plotgen)
+function [xf_avg,xf,traj,u] = general_sol(Planes, simtype, xf_central, avg)
     % Function for solving each problem
-
-    if nargin < 3
-        plotgen = 0;
-    end
     tic
 
     % Initialize parameters
     tol = simtype.tolerance; % Tolerance for x_i(T_final)
     max_iter = simtype.iterations;
     dxf = inf; % Initialize the difference as +inf
+    dxf_err = dxf;
     iter = 0; % Iteration counter
     dim = Planes(1).dim;
     Tf = Planes(1).Tf;
@@ -53,19 +50,24 @@ function [xf_avg,xf,traj,u,lambda_con,fval,exitflag,output,lam] = general_sol(Pl
                 else
                     h = Planes(i).h - (0.5*lambda_D(4*(i-2)+1:4*(i-1),iter)'*Planes(i).A_eq)';
                 end
-                [u_sol,fval,exitflag,output,lam] = quadprog(Planes(i).H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
+                [u_sol,~,~,~,~] = quadprog(Planes(i).H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
                 u((Tf*2)*(i-1)+1:(Tf*2)*i,iter) = u_sol;
                 xf(dim.nx*(i-1)+1:dim.nx*i,iter) = Planes(i).A_eq*u_sol + Planes(i).b_eq;
             end
     
+            gamma = 0;
             if strcmp(simtype.update_sequence, "constant")
                 % Constant step size
                 alpha = simtype.alpha;
-                gamma = 0;
-            elseif strcmp(simtype.update_sequence, "variable")
+            elseif strcmp(simtype.update_sequence, "variable1")
                 % Variable step size
                 alpha = 0.9999^iter*simtype.alpha0;
-                gamma = 0;
+            elseif strcmp(simtype.update_sequence, "variable2")
+                % Variable step size
+                alpha = simtype.alpha/((iter+100)/100);
+            elseif strcmp(simtype.update_sequence, "variable3")
+                % Variable step size
+                alpha = simtype.alpha*2^(-countLeadingZeros(dxf_err));
             elseif strcmp(simtype.update_sequence, "nesterov")
                 % Nesterov's accelerated gradient
                 alpha = simtype.alpha;
@@ -81,7 +83,7 @@ function [xf_avg,xf,traj,u,lambda_con,fval,exitflag,output,lam] = general_sol(Pl
             % Consensus
             for i=1:4
                 h = Planes(i).h + (0.5*lambda_con(4*(i-1)+1:4*(i))'*Planes(i).A_eq)';
-                [u_sol,fval,exitflag,output,lam] = quadprog(Planes(i).H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
+                [u_sol,~,~,~,~] = quadprog(Planes(i).H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
                 u((Tf*2)*(i-1)+1:(Tf*2)*i,iter) = u_sol;
                 xf(dim.nx*(i-1)+1:dim.nx*i,iter) = Planes(i).A_eq*u_sol + Planes(i).b_eq;
                 xf_con(dim.nx*(i-1)+1:dim.nx*i) = Planes(i).A_eq*u_sol + Planes(i).b_eq;
@@ -89,14 +91,14 @@ function [xf_avg,xf,traj,u,lambda_con,fval,exitflag,output,lam] = general_sol(Pl
             xf_con = W^phi*(xf_con);
             lambda_con = lambda_con + alpha*(xf(:,iter)-xf_con);
 
-        else
+        elseif strcmp(simtype.method, "ADMM")
             % ADMM
             for i=1:4
                 H = Planes(i).H + rho*Planes(i).A_eq'*Planes(i).A_eq;
                 % Avoid Hessian not symmetric warning
                 H = (H+H')/2;
                 h = Planes(i).h + (0.5*lambda_ADMM(4*(i-1)+1:4*(i))'*Planes(i).A_eq + rho*(Planes(i).b_eq-xf_con_ADMM(:,iter))'*Planes(i).A_eq)';
-                [u_sol,fval,exitflag,output,lam] = quadprog(H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
+                [u_sol,~,~,~,~] = quadprog(H,h,Planes(i).A_u,Planes(i).b_u,[],[],[],[],[],opts);
                 u((Tf*2)*(i-1)+1:(Tf*2)*i,iter) = u_sol;
                 xf(dim.nx*(i-1)+1:dim.nx*i,iter) = Planes(i).A_eq*u_sol + Planes(i).b_eq;
                 xf_con_ADMM(:,iter+1) = xf_con_ADMM(:,iter+1) + (Planes(i).A_eq*u_sol + Planes(i).b_eq + lambda_ADMM(dim.nx*(i-1)+1:dim.nx*i)/rho)/4;
@@ -104,14 +106,16 @@ function [xf_avg,xf,traj,u,lambda_con,fval,exitflag,output,lam] = general_sol(Pl
             lambda_ADMM = lambda_ADMM + rho*(xf(:,iter)-repmat(xf_con_ADMM(:,iter+1),4,1));
         end
 
+
+        % Check all relative options for convergence
+        dxf_err = max([norm(xf(dim.nx*0+1:dim.nx*1,iter)-xf(dim.nx*1+1:dim.nx*2,iter)), ...
+                   norm(xf(dim.nx*0+1:dim.nx*1,iter)-xf(dim.nx*2+1:dim.nx*3,iter)), ...
+                   norm(xf(dim.nx*0+1:dim.nx*1,iter)-xf(dim.nx*3+1:dim.nx*4,iter)), ...
+                   norm(xf(dim.nx*1+1:dim.nx*2,iter)-xf(dim.nx*2+1:dim.nx*3,iter)), ...
+                   norm(xf(dim.nx*2+1:dim.nx*3,iter)-xf(dim.nx*3+1:dim.nx*4,iter)), ...
+                   norm(xf(dim.nx*1+1:dim.nx*2,iter)-xf(dim.nx*3+1:dim.nx*4,iter))]);
         if strcmp(simtype.endcondition, "tolerance")
-            % Check all relative options for convergence
-            dxf = max([norm(xf(dim.nx*0+1:dim.nx*1,iter)-xf(dim.nx*1+1:dim.nx*2,iter)), ...
-                       norm(xf(dim.nx*0+1:dim.nx*1,iter)-xf(dim.nx*2+1:dim.nx*3,iter)), ...
-                       norm(xf(dim.nx*0+1:dim.nx*1,iter)-xf(dim.nx*3+1:dim.nx*4,iter)), ...
-                       norm(xf(dim.nx*1+1:dim.nx*2,iter)-xf(dim.nx*2+1:dim.nx*3,iter)), ...
-                       norm(xf(dim.nx*2+1:dim.nx*3,iter)-xf(dim.nx*3+1:dim.nx*4,iter)), ...
-                       norm(xf(dim.nx*1+1:dim.nx*2,iter)-xf(dim.nx*3+1:dim.nx*4,iter))]);
+            dxf = dxf_err;
         elseif iter == max_iter
             break
         end
@@ -126,5 +130,28 @@ function [xf_avg,xf,traj,u,lambda_con,fval,exitflag,output,lam] = general_sol(Pl
     for i = 1:4
         trajectory = [Planes(i).x0, reshape(Planes(i).T*Planes(i).x0 + Planes(i).S*u((Tf*2)*(i-1)+1:(Tf*2)*i,iter),4,[])]; 
         eval(sprintf('traj.x%d = trajectory;', i));
+    end
+end
+
+function numLeadingZeros = countLeadingZeros(number)
+    % Convert the number to a string
+    numberStr = num2str(number, '%.15f'); % Ensure sufficient precision
+    
+    % Find the position of the decimal point
+    decimalIndex = find(numberStr == '.', 1);
+    
+    % Initialize the count of leading zeros
+    numLeadingZeros = 0;
+    if any(decimalIndex ~= 2) || ~strcmp(numberStr(1),"0")
+        return
+    end
+    
+    % Loop through the characters after the decimal point
+    for i = decimalIndex+1:length(numberStr)
+        if numberStr(i) == '0'
+            numLeadingZeros = numLeadingZeros + 1;
+        else
+            break;
+        end
     end
 end
